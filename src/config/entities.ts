@@ -469,12 +469,20 @@ export const ENTITY_REGISTRY: EntityEntry[] = [
     related: ['^GSPC'],
   },
   {
+    id: 'XAUUSD=X',
+    type: 'commodity',
+    name: 'Gold Spot (XAU/USD)',
+    aliases: ['gold', 'xau', 'xauusd', 'bullion', 'gold spot', 'gold cfd'],
+    keywords: ['precious metal', 'safe haven', 'inflation hedge', 'bullion', 'jewelry', 'spot price'],
+    related: ['SI=F', 'GLD', 'GC=F'],
+  },
+  {
     id: 'GC=F',
     type: 'commodity',
     name: 'Gold Futures',
-    aliases: ['gold', 'xau', 'bullion'],
-    keywords: ['precious metal', 'safe haven', 'inflation hedge', 'bullion', 'jewelry'],
-    related: ['SI=F', 'GLD'],
+    aliases: ['gold futures', 'comex gold'],
+    keywords: ['precious metal', 'futures contract', 'comex'],
+    related: ['SI=F', 'GLD', 'XAUUSD=X'],
   },
   {
     id: 'CL=F',

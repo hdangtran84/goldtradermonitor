@@ -6,14 +6,6 @@
  * Server-side edge functions are consolidated in the handler.
  */
 
-// PizzINT dashboard + GDELT tensions
-export {
-  fetchPizzIntStatus,
-  fetchGdeltTensions,
-  getPizzIntStatus,
-  getGdeltStatus,
-} from '../pizzint';
-
 // Risk scores (CII + strategic risk)
 export {
   fetchCachedRiskScores,

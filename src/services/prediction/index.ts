@@ -186,7 +186,7 @@ const GEOPOLITICAL_TAGS = [
 ];
 
 const TECH_TAGS = [
-  'ai', 'tech', 'crypto', 'science',
+  'ai', 'tech', 'science',
   'elon-musk', 'business', 'economy',
 ];
 
@@ -415,6 +415,112 @@ function getCountryVariants(country: string): string[] {
   const extra = VARIANT_MAP[lower];
   if (extra) variants.push(...extra);
   return variants;
+}
+
+// Gold-related keywords for filtering markets
+const GOLD_KEYWORDS = [
+  'gold', 'xau', 'xauusd', 'xau/usd', 'precious metal', 'bullion',
+  'gold price', 'gold futures', 'gold spot', 'comex gold',
+];
+
+const goldBreaker = createCircuitBreaker<PredictionMarket[]>({
+  name: 'GoldPredictions',
+  cacheTtlMs: 5 * 60 * 1000,
+  persistCache: true,
+});
+
+function isGoldMarket(title: string): boolean {
+  const lower = title.toLowerCase();
+  return GOLD_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+/**
+ * Fetch prediction markets related to Gold (XAU/USD) price milestones.
+ * Searches across multiple tags and filters for gold-related keywords.
+ */
+export async function fetchGoldPredictions(): Promise<PredictionMarket[]> {
+  return goldBreaker.execute(async () => {
+    // Search tags that might contain commodity/gold markets
+    const searchTags = ['economy', 'fed', 'inflation', 'business', 'commodities', 'markets'];
+
+    // Fetch events from relevant tags
+    const eventResults = await Promise.all(
+      searchTags.map(tag => fetchEventsByTag(tag, 50))
+    );
+
+    const seen = new Set<string>();
+    const goldMarkets: PredictionMarket[] = [];
+
+    // Filter for gold-related markets
+    for (const events of eventResults) {
+      for (const event of events) {
+        if (event.closed || seen.has(event.id)) continue;
+        seen.add(event.id);
+
+        // Check if event title mentions gold
+        const eventIsGold = isGoldMarket(event.title);
+
+        if (event.markets && event.markets.length > 0) {
+          // Filter sub-markets for gold-related ones
+          const goldSubMarkets = event.markets.filter(m =>
+            isGoldMarket(m.question ?? '') || eventIsGold
+          );
+
+          for (const market of goldSubMarkets) {
+            const volume = market.volumeNum ?? (market.volume ? parseFloat(market.volume) : 0);
+            goldMarkets.push({
+              title: market.question || event.title,
+              yesPrice: parseMarketPrice(market),
+              volume: volume || event.volume || 0,
+              url: buildMarketUrl(event.slug, market.slug),
+            });
+          }
+        } else if (eventIsGold) {
+          goldMarkets.push({
+            title: event.title,
+            yesPrice: 50,
+            volume: event.volume ?? 0,
+            url: buildMarketUrl(event.slug),
+          });
+        }
+      }
+    }
+
+    // Also search top markets directly for gold keywords
+    const topMarketsResponse = await polyFetch('markets', {
+      closed: 'false',
+      order: 'volume',
+      ascending: 'false',
+      limit: '200',
+    });
+
+    if (topMarketsResponse.ok) {
+      try {
+        const allMarkets: PolymarketMarket[] = await topMarketsResponse.json();
+        for (const market of allMarkets) {
+          if (!market.question || !isGoldMarket(market.question)) continue;
+
+          const existingTitle = market.question;
+          if (goldMarkets.some(m => m.title === existingTitle)) continue;
+
+          const volume = market.volumeNum ?? (market.volume ? parseFloat(market.volume) : 0);
+          goldMarkets.push({
+            title: market.question,
+            yesPrice: parseMarketPrice(market),
+            volume,
+            url: buildMarketUrl(undefined, market.slug),
+          });
+        }
+      } catch {
+        console.warn('[Polymarket] Failed to parse top markets for gold search');
+      }
+    }
+
+    // Sort by volume descending and return
+    return goldMarkets
+      .sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0))
+      .slice(0, 20);
+  }, []);
 }
 
 export async function fetchCountryMarkets(country: string): Promise<PredictionMarket[]> {

@@ -2,56 +2,64 @@
 @import './panels.css';
 
 /* ============================================================
-   Theme Colors — overridden by [data-theme="light"] below
+   Gold Trading Theme — Dark theme with gold accents
    ============================================================ */
 :root {
-  /* Backgrounds */
-  --bg: #0a0a0a;
-  --bg-secondary: #111;
-  --surface: #141414;
-  --surface-hover: #1e1e1e;
-  --surface-active: #1a1a2e;
+  /* Primary Gold Accent */
+  --gold: #FFD700;
+  --gold-light: #FFE55C;
+  --gold-dark: #B8860B;
+  --gold-muted: #D4AF37;
+  --gold-glow: rgba(255, 215, 0, 0.3);
 
-  /* Borders */
-  --border: #2a2a2a;
-  --border-strong: #444;
-  --border-subtle: #1a1a1a;
+  /* Backgrounds — Deep dark for trading focus */
+  --bg: #0d1117;
+  --bg-secondary: #161b22;
+  --surface: #1c2128;
+  --surface-hover: #252c35;
+  --surface-active: #2d333b;
 
-  /* Text */
-  --text: #e8e8e8;
-  --text-secondary: #ccc;
-  --text-dim: #888;
-  --text-muted: #666;
-  --text-faint: #555;
-  --text-ghost: #444;
-  --accent: #fff;
+  /* Borders — Subtle with gold hints */
+  --border: #30363d;
+  --border-strong: #484f58;
+  --border-subtle: #21262d;
+  --border-gold: rgba(255, 215, 0, 0.3);
+
+  /* Text — High contrast for readability */
+  --text: #e6e6e6;
+  --text-secondary: #c9d1d9;
+  --text-dim: #8b949e;
+  --text-muted: #6e7681;
+  --text-faint: #484f58;
+  --text-ghost: #30363d;
+  --accent: #FFD700;
 
   /* Overlays & shadows */
-  --overlay-subtle: rgba(255, 255, 255, 0.03);
-  --overlay-light: rgba(255, 255, 255, 0.05);
-  --overlay-medium: rgba(255, 255, 255, 0.1);
-  --overlay-heavy: rgba(255, 255, 255, 0.2);
-  --shadow-color: rgba(0, 0, 0, 0.5);
+  --overlay-subtle: rgba(255, 215, 0, 0.02);
+  --overlay-light: rgba(255, 215, 0, 0.05);
+  --overlay-medium: rgba(255, 215, 0, 0.1);
+  --overlay-heavy: rgba(255, 215, 0, 0.15);
+  --shadow-color: rgba(0, 0, 0, 0.6);
   --darken-light: rgba(0, 0, 0, 0.15);
-  --darken-medium: rgba(0, 0, 0, 0.2);
-  --darken-heavy: rgba(0, 0, 0, 0.3);
+  --darken-medium: rgba(0, 0, 0, 0.25);
+  --darken-heavy: rgba(0, 0, 0, 0.35);
 
   /* Scrollbar */
-  --scrollbar-thumb: #333;
-  --scrollbar-thumb-hover: #555;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-thumb-hover: #484f58;
 
   /* Input */
-  --input-bg: #1a1a1a;
+  --input-bg: #161b22;
 
-  /* Panels */
-  --panel-bg: #141414;
-  --panel-border: #2a2a2a;
+  /* Panels — Sidebar style */
+  --panel-bg: #161b22;
+  --panel-border: #30363d;
 
-  /* Map */
-  --map-bg: #020a08;
-  --map-grid: #0a2a20;
-  --map-country: #0a2018;
-  --map-stroke: #0f5040;
+  /* Map (Gold Chart area) */
+  --map-bg: #0d1117;
+  --map-grid: #21262d;
+  --map-country: #1c2128;
+  --map-stroke: #30363d;
 
   /* Font stack */
   --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Fira Code', 'DejaVu Sans Mono', 'Liberation Mono', monospace;
@@ -188,6 +196,172 @@
   --map-stroke: #c8b8a8;
 }
 
+/* ============================================================
+   Gold Theme Accent Styles — Applied globally for Gold Trader
+   ============================================================ */
+
+/* Header gold accent border */
+.header {
+  border-bottom: 1px solid var(--border);
+  border-image: linear-gradient(90deg, var(--gold) 0%, transparent 50%, var(--gold) 100%) 1;
+}
+
+/* Site title gold styling */
+.site-title-text,
+.site-title {
+  color: var(--gold) !important;
+  text-shadow: 0 0 20px var(--gold-glow);
+}
+
+/* Buttons with gold accent */
+.btn-primary,
+.time-range-btn.active,
+.retry-btn,
+.retry-brief-btn {
+  background: var(--gold) !important;
+  color: #000 !important;
+  border-color: var(--gold) !important;
+}
+
+.btn-primary:hover,
+.retry-btn:hover,
+.retry-brief-btn:hover {
+  background: var(--gold-light) !important;
+  box-shadow: 0 0 15px var(--gold-glow);
+}
+
+/* Panel headers with subtle gold gradient */
+.panel-header,
+.gold-chart-header,
+.gold-brief-header {
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.08) 0%, transparent 100%);
+}
+
+/* Panel borders with gold tint */
+.panel {
+  border-color: var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 215, 0, 0.05);
+}
+
+/* Links and interactive elements */
+a:not(.btn):hover,
+.panel-title:hover {
+  color: var(--gold);
+}
+
+/* Active/selected states */
+.active,
+.selected,
+[aria-selected="true"] {
+  border-color: var(--gold) !important;
+}
+
+/* Focus rings */
+*:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Scrollbar gold accent */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-dark);
+}
+
+/* Selection highlight */
+::selection {
+  background: var(--gold);
+  color: #000;
+}
+
+/* Badge/tag gold variant */
+.badge-gold,
+.tag-gold,
+.ai-badge {
+  background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 100%);
+  color: #000;
+}
+
+/* Chart tooltip */
+.chart-tooltip,
+.gold-tooltip {
+  border: 1px solid var(--gold-dark);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.15);
+}
+
+/* Loading spinner gold */
+.spinner,
+.loading-spinner {
+  border-top-color: var(--gold) !important;
+}
+
+/* Progress bars */
+.progress-bar,
+.progress-fill {
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold));
+}
+
+/* Input focus states */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 2px var(--gold-glow);
+}
+
+/* Status indicators with gold accent */
+.status-indicator.active {
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+
+/* Quick stats gold theme */
+.gold-quick-stats {
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border-gold);
+}
+
+.quick-stat-card {
+  border: 1px solid var(--border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.quick-stat-card:hover {
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+}
+
+/* Live indicators */
+.live-indicator,
+.live-badge {
+  background: var(--gold);
+  color: #000;
+  animation: gold-pulse 2s ease-in-out infinite;
+}
+
+@keyframes gold-pulse {
+  0%, 100% { box-shadow: 0 0 5px var(--gold-glow); }
+  50% { box-shadow: 0 0 15px var(--gold), 0 0 25px var(--gold-glow); }
+}
+
+/* Signal badges gold variants */
+.signal-badge.buy {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+}
+
+.signal-badge.sell {
+  background: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.4);
+}
+
+.signal-badge.neutral {
+  background: rgba(255, 215, 0, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -206,11 +380,11 @@ body {
   line-height: 1.5;
   background: var(--bg);
   color: var(--text);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   height: 100%;
   width: 100%;
   min-height: 100vh;
-  min-width: 100vw;
 }
 
 /* Pause all animations when tab is hidden or idle */
@@ -252,14 +426,11 @@ canvas,
   height: 100%;
   width: 100%;
   min-height: 100vh;
-  min-width: 100vw;
+  max-width: 100vw;
   display: flex;
   flex-direction: column;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  overflow-x: hidden;
 }
 
 .header {
@@ -625,6 +796,50 @@ canvas,
   gap: 12px;
 }
 
+/* Disclaimer Scrolling Ticker */
+.gold-disclaimer-ticker {
+  width: 100%;
+  height: 28px;
+  background: #0a0a0a;
+  overflow: hidden;
+  position: relative;
+}
+
+.gold-disclaimer-ticker .ticker-content {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  white-space: nowrap;
+  animation: ticker-scroll 30s linear infinite;
+}
+
+.gold-disclaimer-ticker .ticker-content span {
+  display: inline-block;
+  padding-right: 80px;
+  font-size: 12px;
+  color: #999;
+  letter-spacing: 0.3px;
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Light theme */
+[data-theme="light"] .gold-disclaimer-ticker {
+  background: #f5f5f5;
+  border-top-color: #e0e0e0;
+}
+
+[data-theme="light"] .gold-disclaimer-ticker .ticker-content span {
+  color: #666;
+}
+
 .theme-toggle-btn {
   display: flex;
   align-items: center;
@@ -736,6 +951,89 @@ canvas,
   overflow-x: hidden;
   background: var(--bg);
   width: 100%;
+  max-width: 2000px;
+  margin: 0 auto;
+}
+
+/* Top dashboard row: Gold chart + Livestream side-by-side */
+.top-dashboard-row {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  padding: 4px;
+  min-height: 400px;
+  height: 55vh;
+  max-height: 65vh;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.top-dashboard-row .gold-chart-section {
+  flex: 3;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.livestream-section {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+  height: 100%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.livestream-section .livestream-panel {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.livestream-section .livestream-panel .panel-header {
+  flex-shrink: 0;
+}
+
+.livestream-section .livestream-panel .panel-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive: Stack on smaller screens */
+@media (max-width: 1200px) {
+  .top-dashboard-row {
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+    min-height: auto;
+  }
+  
+  .top-dashboard-row .gold-chart-section {
+    flex: none;
+    height: 50vh;
+    min-height: 350px;
+    max-width: none;
+  }
+  
+  .livestream-section {
+    flex: none;
+    height: 45vh;
+    min-height: 300px;
+    min-width: 0;
+    max-width: none;
+  }
 }
 
 .map-section {
@@ -749,6 +1047,14 @@ canvas,
   flex-direction: column;
   flex-shrink: 0;
   position: relative;
+}
+
+/* Override map-section height when inside top-dashboard-row */
+.top-dashboard-row .map-section {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  flex-shrink: 1;
 }
 
 .map-section.hidden {
@@ -850,6 +1156,71 @@ canvas,
   position: relative;
   z-index: 1;
   /* This ensures panels scroll UNDER the pinned map (z-index: 100) */
+}
+
+/* News grid: responsive layout for panels */
+.panels-grid.news-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(2, minmax(200px, 1fr));
+  grid-auto-flow: row;
+  gap: 4px;
+  padding: 4px;
+  min-height: 0;
+  max-height: none;
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.panels-grid.news-grid .panel {
+  grid-column: span 1;
+  grid-row: span 1;
+  min-height: 200px;
+  max-height: none;
+  height: auto;
+  min-width: 0;
+}
+
+/* Hide panels beyond the 10th in news-grid */
+.panels-grid.news-grid .panel:nth-child(n+11) {
+  display: none;
+}
+
+/* Responsive: 4 columns on medium-large screens */
+@media (max-width: 1400px) {
+  .panels-grid.news-grid {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto;
+  }
+  
+  .panels-grid.news-grid .panel:nth-child(n+11) {
+    display: none;
+  }
+}
+
+/* Responsive: 3 columns on medium screens */
+@media (max-width: 1100px) {
+  .panels-grid.news-grid {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto;
+  }
+}
+
+/* Responsive: 2 columns on smaller screens */
+@media (max-width: 800px) {
+  .panels-grid.news-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+  }
+}
+
+/* Responsive: 1 column on mobile */
+@media (max-width: 500px) {
+  .panels-grid.news-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
 }
 
 .panel {
@@ -1895,13 +2266,14 @@ canvas,
   width: 100%;
   flex: 1;
   background: var(--bg);
-  aspect-ratio: 16 / 9;
+  min-height: 0;
 }
 
 .live-news-player iframe {
   width: 100%;
   height: 100%;
   display: block;
+  min-height: 200px;
 }
 
 /* Live Webcams Panel */
@@ -4875,6 +5247,143 @@ a.prediction-link:hover {
   padding: 0 4px;
 }
 
+/* Gold Prediction Markets Styles */
+.gold-markets-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(184, 134, 11, 0.1));
+  border: 1px solid var(--gold, #FFD700);
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.gold-header-icon {
+  font-size: 16px;
+}
+
+.gold-header-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold, #FFD700);
+  flex: 1;
+}
+
+.gold-market-count {
+  font-size: 10px;
+  color: var(--gold-light, #FFE55C);
+  background: rgba(255, 215, 0, 0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.gold-market-card {
+  background: rgba(255, 215, 0, 0.03);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.gold-market-card:hover {
+  background: rgba(255, 215, 0, 0.08);
+  border-color: var(--gold, #FFD700);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.15);
+}
+
+.gold-market-card:last-child {
+  margin-bottom: 0;
+}
+
+.gold-market-link {
+  color: var(--gold, #FFD700) !important;
+  font-weight: 500;
+}
+
+.gold-market-link:hover {
+  color: var(--gold-light, #FFE55C) !important;
+}
+
+.gold-market-title {
+  color: var(--gold, #FFD700);
+  font-weight: 500;
+}
+
+.gold-market-stats {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0;
+  font-size: 10px;
+}
+
+.gold-volume {
+  color: var(--muted);
+}
+
+.gold-odds {
+  font-weight: 600;
+}
+
+.gold-odds.odds-yes-favored {
+  color: var(--green);
+}
+
+.gold-odds.odds-no-favored {
+  color: var(--red);
+}
+
+.gold-market-stats .stat-label {
+  color: var(--text-dim);
+  font-weight: normal;
+}
+
+.gold-prediction-bar {
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.gold-yes {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.gold-no {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* Gold Markets Empty State */
+.gold-markets-empty {
+  text-align: center;
+  padding: 30px 20px;
+  background: rgba(255, 215, 0, 0.05);
+  border: 1px dashed rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+}
+
+.gold-markets-empty .gold-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.gold-markets-empty .empty-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold, #FFD700);
+  margin-bottom: 8px;
+}
+
+.gold-markets-empty .empty-message {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.gold-markets-empty .empty-refresh {
+  font-size: 10px;
+  color: var(--muted);
+}
+
 /* Monitors */
 .monitor-input-container {
   margin-bottom: 12px;
@@ -6981,9 +7490,32 @@ a.prediction-link:hover {
   background: var(--border);
 }
 
+/* Grid layout for indicator cards */
+.economic-indicators.economic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 4px;
+  background: transparent;
+}
+
 .economic-indicator {
   background: var(--surface);
   padding: 8px 12px;
+}
+
+/* Enhanced card style for grid layout */
+.economic-indicator.economic-card {
+  background: var(--overlay-subtle);
+  border-radius: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  transition: all 0.15s ease;
+}
+
+.economic-indicator.economic-card:hover {
+  background: var(--overlay-light);
+  border-color: var(--accent);
 }
 
 .indicator-header {
@@ -7009,17 +7541,20 @@ a.prediction-link:hover {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  margin-top: 4px;
 }
 
 .indicator-value .value {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: bold;
   color: var(--accent);
+  line-height: 1.2;
 }
 
 .indicator-value .change {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-dim);
+  font-weight: 500;
 }
 
 .indicator-value .change.positive {
@@ -7080,8 +7615,10 @@ a.prediction-link:hover {
 
 .economic-content {
   padding: 8px;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
 
 .economic-empty {
@@ -8787,6 +9324,43 @@ a.prediction-link:hover {
     min-width: 50px;
   }
 
+  /* Keep header compact on mobile - don't wrap */
+  .header {
+    flex-wrap: nowrap;
+    padding: 4px 8px;
+    height: auto;
+    min-height: 40px;
+  }
+
+  .header-left,
+  .header-right {
+    flex-basis: auto;
+    flex-shrink: 0;
+  }
+
+  .header-left {
+    gap: 8px;
+  }
+
+  /* Hide logo text on mobile */
+  .header-left .logo {
+    display: none;
+  }
+
+  .header-right {
+    gap: 4px;
+  }
+
+  /* Compact search button on mobile */
+  .search-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .search-btn kbd {
+    display: none;
+  }
+
   .map-popup {
     left: 10px !important;
     right: 10px !important;
@@ -8797,24 +9371,6 @@ a.prediction-link:hover {
   .map-popup.map-popup-sheet {
     left: 8px !important;
     right: 8px !important;
-  }
-
-  /* Stack header on very small screens */
-  .header {
-    flex-wrap: wrap;
-    padding: 8px;
-  }
-
-  .header-left,
-  .header-center,
-  .header-right {
-    flex-basis: 100%;
-    justify-content: center;
-  }
-
-  .header-center {
-    order: -1;
-    margin-bottom: 8px;
   }
 
   /* Hide non-essential header items */
@@ -15390,5 +15946,998 @@ body.has-critical-banner .panels-grid {
     grid-auto-rows: minmax(200px, 380px);
     align-content: start;
     overflow-y: auto;
+  }
+}
+
+/* ============================================
+   Gold Price Chart Styles
+   ============================================ */
+
+.gold-chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg, #0d1117);
+  overflow: hidden;
+  border: 1px solid var(--border-gold, rgba(255, 215, 0, 0.15));
+  border-radius: 8px;
+}
+
+/* Quick Stats Panel */
+.gold-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, var(--bg-secondary, #161b22) 0%, var(--bg, #0d1117) 100%);
+  border-bottom: 1px solid var(--border-gold, rgba(255, 215, 0, 0.2));
+  flex-shrink: 0;
+}
+
+.quick-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--surface, #1c2128);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.quick-stat-card:hover {
+  border-color: var(--gold-dark, #B8860B);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+}
+
+.quick-stat-card.current-price {
+  border-color: var(--gold-dark, #B8860B);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.08) 0%, var(--surface, #1c2128) 100%);
+}
+
+.quick-stat-card.current-price .stat-value {
+  color: var(--gold, #FFD700);
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.quick-stat-card .stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim, #8b949e);
+}
+
+.quick-stat-card .stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text, #e6e6e6);
+}
+
+.quick-stat-card .stat-value.positive {
+  color: #4ade80;
+}
+
+.quick-stat-card .stat-value.negative {
+  color: #f87171;
+}
+
+.quick-stat-card .trend-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.quick-stat-card .trend-badge.bullish {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.quick-stat-card .trend-badge.bearish {
+  background: rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.quick-stat-card .trend-badge.neutral {
+  background: rgba(255, 215, 0, 0.2);
+  color: var(--gold, #FFD700);
+}
+
+@media (max-width: 900px) {
+  .gold-quick-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .gold-quick-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-stat-card {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.gold-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.08) 0%, var(--bg-secondary, #161b22) 50%, rgba(255, 215, 0, 0.08) 100%);
+  border-bottom: 1px solid var(--border-gold, rgba(255, 215, 0, 0.2));
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gold-price-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gold-symbol {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gold-icon {
+  font-size: 24px;
+}
+
+.gold-pair {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--gold, #ffd700);
+}
+
+.gold-label {
+  font-size: 12px;
+  color: var(--text-dim, #888);
+  text-transform: uppercase;
+}
+
+.gold-price-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.gold-current-price {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--gold, #FFD700);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.gold-change {
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gold-change.positive {
+  color: #4ade80;
+}
+
+.gold-change.negative {
+  color: #f87171;
+}
+
+.gold-change.neutral {
+  color: var(--gold, #FFD700);
+}
+
+.gold-signal-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.signal-label {
+  font-size: 10px;
+  color: var(--text-dim, #888);
+  text-transform: uppercase;
+}
+
+.signal-badge {
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.signal-badge.buy {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--green, #00ff88);
+  border: 1px solid var(--green, #00ff88);
+}
+
+.signal-badge.sell {
+  background: rgba(255, 68, 68, 0.15);
+  color: var(--red, #ff4444);
+  border: 1px solid var(--red, #ff4444);
+}
+
+.signal-badge.neutral {
+  background: rgba(136, 136, 136, 0.15);
+  color: var(--text-dim, #888);
+  border: 1px solid var(--border, #2a2a2a);
+}
+
+/* Gold Trend Display (replaces signal) */
+.gold-trend-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.trend-label {
+  font-size: 10px;
+  color: var(--text-dim, #888);
+  text-transform: uppercase;
+}
+
+.trend-badge {
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.trend-badge.bullish {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--green, #00ff88);
+  border: 1px solid var(--green, #00ff88);
+}
+
+.trend-badge.bearish {
+  background: rgba(255, 68, 68, 0.15);
+  color: var(--red, #ff4444);
+  border: 1px solid var(--red, #ff4444);
+}
+
+.trend-badge.neutral {
+  background: rgba(136, 136, 136, 0.15);
+  color: var(--text-dim, #888);
+  border: 1px solid var(--border, #2a2a2a);
+}
+
+/* Gold Data Source Badge */
+.gold-data-source-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: bold;
+  margin-left: 8px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.gold-data-source-badge.xaut {
+  background: rgba(255, 0, 0, 0.15);
+  color: #ff4444;
+  border: 1px solid #ff4444;
+}
+
+.gold-data-source-badge.yahoo {
+  background: rgba(0, 123, 255, 0.15);
+  color: #007bff;
+  border: 1px solid #007bff;
+}
+
+/* Gold Sentiment Display */
+.gold-sentiment-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0 12px;
+}
+
+.sentiment-label {
+  font-size: 10px;
+  color: var(--text-dim, #888);
+  text-transform: uppercase;
+}
+
+.sentiment-badge {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sentiment-badge.bullish {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--green, #00ff88);
+  border: 1px solid var(--green, #00ff88);
+}
+
+.sentiment-badge.bearish {
+  background: rgba(255, 68, 68, 0.2);
+  color: var(--red, #ff4444);
+  border: 1px solid var(--red, #ff4444);
+}
+
+.sentiment-badge.neutral {
+  background: rgba(255, 215, 0, 0.15);
+  color: #FFD700;
+  border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.sentiment-summary {
+  font-size: 9px;
+  color: var(--text-dim, #888);
+  max-width: 150px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.gold-time-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-range-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border, #2a2a2a);
+  color: var(--text-dim, #888);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.time-range-btn:hover {
+  border-color: var(--gold, #ffd700);
+  color: var(--gold, #ffd700);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.time-range-btn.active {
+  background: var(--gold, #ffd700);
+  border-color: var(--gold, #ffd700);
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+}
+
+.last-updated {
+  font-size: 11px;
+  color: var(--text-dim, #666);
+  margin-left: 12px;
+}
+
+.gold-chart-container {
+  flex: 1;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gold Chart Footer - Prediction Note + Disclaimer stacked */
+.gold-chart-footer {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border, #2a2a2a);
+}
+
+/* Gold Prediction Note */
+.gold-prediction-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 215, 0, 0.05);
+  border-bottom: 1px solid var(--border, #2a2a2a);
+  font-size: 11px;
+  color: var(--text-dim, #888);
+}
+
+.prediction-note-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.prediction-note-text {
+  line-height: 1.4;
+}
+
+[data-theme="light"] .gold-chart-footer {
+  border-top-color: #e0e0e0;
+}
+
+[data-theme="light"] .gold-prediction-note {
+  background: rgba(184, 134, 11, 0.05);
+  border-bottom-color: #e0e0e0;
+}
+
+.gold-chart-loading,
+.gold-chart-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-dim, #888);
+  font-size: 14px;
+  gap: 12px;
+}
+
+.gold-chart-error .error-icon {
+  font-size: 32px;
+}
+
+.gold-chart-error .retry-btn {
+  padding: 8px 16px;
+  background: var(--gold, #ffd700);
+  border: none;
+  border-radius: 4px;
+  color: #000;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.gold-chart-error .retry-btn:hover {
+  opacity: 0.8;
+}
+
+.gold-price-svg {
+  display: block;
+}
+
+.gold-price-svg .gold-line {
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.4));
+}
+
+.gold-price-svg .focus circle {
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.8));
+}
+
+/* Light theme overrides */
+[data-theme="light"] .gold-chart-wrapper {
+  background: var(--panel-bg, #fff);
+}
+
+[data-theme="light"] .gold-chart-header {
+  background: var(--bg, #f8f9fa);
+}
+
+[data-theme="light"] .gold-pair {
+  color: #b8860b;
+}
+
+[data-theme="light"] .gold-current-price {
+  color: var(--text, #1a1a1a);
+}
+
+[data-theme="light"] .time-range-btn.active {
+  background: #b8860b;
+  border-color: #b8860b;
+}
+
+[data-theme="light"] .time-range-btn:hover {
+  border-color: #b8860b;
+  color: #b8860b;
+}
+
+[data-theme="light"] .gold-chart-error .retry-btn {
+  background: #b8860b;
+}
+
+/* Quick Stats Light Theme */
+[data-theme="light"] .gold-quick-stats {
+  background: #f5f5f5;
+}
+
+[data-theme="light"] .quick-stat-card {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+
+[data-theme="light"] .quick-stat-card .stat-label {
+  color: #666;
+}
+
+[data-theme="light"] .quick-stat-card .stat-value {
+  color: #1a1a1a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .gold-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 12px;
+  }
+
+  .gold-price-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .gold-price-display {
+    align-items: flex-start;
+  }
+
+  .gold-current-price {
+    font-size: 24px;
+  }
+
+  .gold-signal-display,
+  .gold-trend-display {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .gold-time-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .last-updated {
+    margin-left: 0;
+    font-size: 10px;
+  }
+
+  /* Gold chart mobile fixes - ensure chart is visible */
+  .gold-chart-section {
+    height: auto !important;
+    min-height: 450px !important;
+    max-height: none !important;
+  }
+
+  /* Hide quick stats grid on mobile - header already shows price */
+  .gold-quick-stats {
+    display: none !important;
+  }
+
+  /* Ensure chart container gets enough space on mobile */
+  .gold-chart-container {
+    min-height: 250px !important;
+    flex: 1 1 auto !important;
+  }
+
+  /* Make gold chart wrapper fill available space */
+  .gold-chart-wrapper {
+    min-height: 400px;
+  }
+
+  /* Compact footer on mobile */
+  .gold-chart-footer {
+    padding: 4px 8px;
+  }
+
+  .gold-prediction-note {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .gold-disclaimer-ticker {
+    font-size: 10px;
+  }
+}
+
+/* ============================================
+   Gold Brief Ticker Styles (Glint-style)
+   ============================================ */
+
+#goldBriefContainer {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.gold-brief-ticker {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 32px;
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  overflow: hidden;
+}
+
+.ticker-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+  border-right: 1px solid #1a1a1a;
+  flex-shrink: 0;
+}
+
+.ticker-icon {
+  font-size: 14px;
+}
+
+.ticker-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffd700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.ticker-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+}
+
+.ticker-track {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  animation: ticker-scroll 60s linear infinite;
+  white-space: nowrap;
+}
+
+.ticker-text {
+  display: inline-block;
+  padding: 0 48px 0 24px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #e0e0e0;
+  white-space: nowrap;
+}
+
+.ticker-text strong,
+.gold-brief-ticker.sentiment-bullish .ticker-text {
+  color: #ffd700;
+}
+
+.gold-brief-ticker.sentiment-bearish .ticker-text {
+  color: #f87171;
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-controls {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 100%;
+  border-left: 1px solid #1a1a1a;
+  flex-shrink: 0;
+}
+
+.ticker-refresh-btn {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #888;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.ticker-refresh-btn:hover {
+  background: #1a1a1a;
+  color: #ffd700;
+  border-color: #ffd700;
+}
+
+.ticker-refresh-btn.loading {
+  animation: spin 1s linear infinite;
+  pointer-events: none;
+}
+
+.ticker-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Light theme overrides */
+[data-theme="light"] .gold-brief-ticker {
+  background: #f8f9fa;
+  border-bottom-color: #e0e0e0;
+}
+
+[data-theme="light"] .ticker-label {
+  background: linear-gradient(90deg, rgba(184, 134, 11, 0.15) 0%, rgba(184, 134, 11, 0.05) 100%);
+  border-right-color: #e0e0e0;
+}
+
+[data-theme="light"] .ticker-title {
+  color: #b8860b;
+}
+
+[data-theme="light"] .ticker-text {
+  color: #333;
+}
+
+[data-theme="light"] .ticker-controls {
+  border-left-color: #e0e0e0;
+}
+
+[data-theme="light"] .ticker-refresh-btn {
+  border-color: #d0d0d0;
+  color: #666;
+}
+
+[data-theme="light"] .ticker-refresh-btn:hover {
+  background: #e8e8e8;
+  color: #b8860b;
+  border-color: #b8860b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .gold-brief-ticker {
+    height: 28px;
+  }
+  
+  .ticker-label {
+    padding: 0 8px;
+  }
+  
+  .ticker-title {
+    font-size: 9px;
+  }
+  
+  .ticker-text {
+    font-size: 11px;
+  }
+}
+
+/* ============================================
+   Economic Calendar Panel Styles
+   ============================================ */
+
+.economic-calendar-loading,
+.economic-calendar-error,
+.economic-calendar-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 12px;
+  color: var(--text-secondary, #888);
+  text-align: center;
+}
+
+.economic-calendar-error .error-icon {
+  font-size: 24px;
+}
+
+.economic-calendar-error .retry-btn {
+  margin-top: 8px;
+  padding: 6px 16px;
+  background: transparent;
+  border: 1px solid var(--gold-accent, #b8860b);
+  color: var(--gold-accent, #b8860b);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.economic-calendar-error .retry-btn:hover {
+  background: var(--gold-accent, #b8860b);
+  color: #000;
+}
+
+.economic-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+.economic-event-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px 12px;
+  transition: all 0.2s;
+}
+
+.economic-event-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.economic-event-card.high {
+  border-left: 3px solid #ff4444;
+}
+
+.economic-event-card.medium {
+  border-left: 3px solid #ffaa00;
+}
+
+.economic-event-card.low {
+  border-left: 3px solid #666;
+}
+
+.economic-event-card.past {
+  opacity: 0.6;
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.event-flag {
+  font-size: 14px;
+}
+
+.event-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary, #fff);
+}
+
+.event-impact {
+  font-size: 10px;
+}
+
+.event-time {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  margin-bottom: 6px;
+  font-family: var(--font-mono, monospace);
+}
+
+.event-data {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.data-actual {
+  color: var(--status-success, #22c55e);
+}
+
+.data-actual strong {
+  font-weight: 700;
+}
+
+.data-forecast,
+.data-previous {
+  color: var(--text-secondary, #888);
+}
+
+.event-gold-effect {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(184, 134, 11, 0.1);
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
+.event-gold-effect .gold-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.event-gold-effect .effect-text {
+  font-size: 11px;
+  color: var(--gold-accent, #b8860b);
+  line-height: 1.4;
+}
+
+.economic-calendar-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  color: var(--text-secondary, #666);
+}
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.impact-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.impact-dot.high {
+  background: #ff4444;
+}
+
+.impact-dot.medium {
+  background: #ffaa00;
+}
+
+.last-updated {
+  font-family: var(--font-mono, monospace);
+}
+
+/* Light theme */
+[data-theme="light"] .economic-event-card {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .economic-event-card:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .event-name {
+  color: #333;
+}
+
+[data-theme="light"] .economic-calendar-footer {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .event-data {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  /* Disclaimer responsive */
+  .disclaimer-tooltip {
+    width: 220px;
+    right: -10px;
+  }
+  
+  .disclaimer-tooltip p {
+    font-size: 10px;
   }
 }

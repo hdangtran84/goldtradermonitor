@@ -4,7 +4,6 @@ import type { NewsItem, MapLayers } from '@/types';
 import type { MapView } from '@/components';
 import type { Command } from '@/config/commands';
 import { SearchModal } from '@/components';
-import { CIIPanel } from '@/components';
 import { SITE_VARIANT, STORAGE_KEYS } from '@/config';
 import { LAYER_PRESETS, LAYER_KEY_MAP } from '@/config/commands';
 import { calculateCII, TIER1_COUNTRIES } from '@/services/country-instability';
@@ -536,8 +535,7 @@ export class SearchManager implements AppModule {
   }
 
   private buildCountrySearchItems(): { id: string; title: string; subtitle: string; data: { code: string; name: string } }[] {
-    const panelScores = (this.ctx.panels['cii'] as CIIPanel | undefined)?.getScores() ?? [];
-    const scores = panelScores.length > 0 ? panelScores : calculateCII();
+    const scores = calculateCII();
     const ciiByCode = new Map(scores.map((score) => [score.code, score]));
     return Object.entries(TIER1_COUNTRIES).map(([code, name]) => {
       const score = ciiByCode.get(code);

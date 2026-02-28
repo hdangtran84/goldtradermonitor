@@ -26,7 +26,7 @@ export interface NewsItem {
   locationName?: string;
   lang?: string;
   // Happy variant: positive content category
-  happyCategory?: import('@/services/positive-classifier').HappyContentCategory;
+  happyCategory?: string;
   // Image URL extracted from RSS media/enclosure tags
   imageUrl?: string;
 }
@@ -484,27 +484,28 @@ export interface PanelConfig {
 }
 
 export interface MapLayers {
-  conflicts: boolean;
-  bases: boolean;
   cables: boolean;
   pipelines: boolean;
   hotspots: boolean;
-  ais: boolean;
-  nuclear: boolean;
   irradiators: boolean;
   sanctions: boolean;
-  weather: boolean;
   economic: boolean;
-  waterways: boolean;
-  outages: boolean;
   cyberThreats: boolean;
   datacenters: boolean;
+  spaceports: boolean;
+  minerals: boolean;
+  // Core map layers
+  conflicts: boolean;
+  bases: boolean;
+  ais: boolean;
+  nuclear: boolean;
+  weather: boolean;
+  waterways: boolean;
+  outages: boolean;
   protests: boolean;
   flights: boolean;
   military: boolean;
   natural: boolean;
-  spaceports: boolean;
-  minerals: boolean;
   fires: boolean;
   // Data source layers
   ucdpEvents: boolean;

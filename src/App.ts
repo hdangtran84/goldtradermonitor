@@ -155,6 +155,22 @@ export class App {
       localStorage.setItem(LAYOUT_RESET_MIGRATION_KEY, 'done');
     }
 
+    // Finance variant migration: replace Markets with My Monitors
+    if (currentVariant === 'finance') {
+      const FINANCE_MONITORS_MIGRATION_KEY = 'goldtrader-markets-to-monitors-v1';
+      if (!localStorage.getItem(FINANCE_MONITORS_MIGRATION_KEY)) {
+        if (panelSettings['markets']) {
+          panelSettings['markets'].enabled = false;
+        }
+        if (panelSettings['monitors']) {
+          panelSettings['monitors'].enabled = true;
+        }
+        saveToStorage(STORAGE_KEYS.panels, panelSettings);
+        console.log('[App] Finance variant: Replaced Markets panel with My Monitors');
+        localStorage.setItem(FINANCE_MONITORS_MIGRATION_KEY, 'done');
+      }
+    }
+
     // Desktop key management panel must always remain accessible in Tauri.
     if (isDesktopApp) {
       const runtimePanel = panelSettings['runtime-config'] ?? {
@@ -221,19 +237,8 @@ export class App {
       exportPanel: null,
       unifiedSettings: null,
       mobileWarningModal: null,
-      pizzintIndicator: null,
       countryBriefPage: null,
       countryTimeline: null,
-      positivePanel: null,
-      countersPanel: null,
-      progressPanel: null,
-      breakthroughsPanel: null,
-      heroPanel: null,
-      digestPanel: null,
-      speciesPanel: null,
-      renewablePanel: null,
-      tvMode: null,
-      happyAllItems: [],
       isDestroyed: false,
       isPlaybackMode: false,
       isIdle: false,
@@ -303,11 +308,6 @@ export class App {
     // Phase 1: Layout (creates map + panels)
     this.panelLayout.init();
 
-    // Happy variant: pre-populate panels from persistent cache for instant render
-    if (SITE_VARIANT === 'happy') {
-      await this.dataLoader.hydrateHappyPanelsFromCache();
-    }
-
     // Phase 2: Shared UI components
     this.state.signalModal = new SignalModal();
     this.state.signalModal.setLocationClickHandler((lat, lon) => {
@@ -330,9 +330,9 @@ export class App {
     // Phase 3: UI setup methods
     this.eventHandlers.startHeaderClock();
     this.eventHandlers.setupMobileWarning();
-    this.eventHandlers.setupPlaybackControl();
+    // Playback control removed for Gold Trader variant
+    // this.eventHandlers.setupPlaybackControl();
     this.eventHandlers.setupStatusPanel();
-    this.eventHandlers.setupPizzIntIndicator();
     this.eventHandlers.setupExportPanel();
     this.eventHandlers.setupUnifiedSettings();
 
@@ -463,7 +463,6 @@ export class App {
       this.refreshScheduler.registerAll([
         { name: 'markets', fn: () => this.dataLoader.loadMarkets(), intervalMs: REFRESH_INTERVALS.markets },
         { name: 'predictions', fn: () => this.dataLoader.loadPredictions(), intervalMs: REFRESH_INTERVALS.predictions },
-        { name: 'pizzint', fn: () => this.dataLoader.loadPizzInt(), intervalMs: 10 * 60 * 1000 },
         { name: 'natural', fn: () => this.dataLoader.loadNatural(), intervalMs: 5 * 60 * 1000, condition: () => this.state.mapLayers.natural },
         { name: 'weather', fn: () => this.dataLoader.loadWeatherAlerts(), intervalMs: 10 * 60 * 1000, condition: () => this.state.mapLayers.weather },
         { name: 'fred', fn: () => this.dataLoader.loadFredData(), intervalMs: 30 * 60 * 1000 },

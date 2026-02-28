@@ -6,7 +6,8 @@ import type { NewsItem } from '@/types';
 import type { PredictionMarket } from '@/services/prediction';
 import type { AssetType } from '@/types';
 import type { CountryBriefSignals } from '@/app/app-context';
-import type { StockIndexData } from '@/components/CountryIntelModal';
+// Stub type for removed CountryIntelModal
+type StockIndexData = { available: boolean; weekChangePercent: string; indexName: string };
 import { getNearbyInfrastructure, haversineDistanceKm } from '@/services/related-assets';
 import { PORTS } from '@/config/ports';
 import type { Port } from '@/config/ports';

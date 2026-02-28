@@ -543,10 +543,12 @@
       "indicators": "Indicators",
       "oil": "Oil",
       "gov": "Gov",
+      "centralBanks": "Central Banks",
       "noData": "No economic data available",
       "noOilData": "Oil data not available",
       "noOilMetrics": "No oil metrics available. Add EIA_API_KEY to enable.",
       "noSpending": "No recent government awards",
+      "noCentralBankData": "No central bank data yet - FRED may be loading",
       "awards": "awards",
       "noIndicatorData": "No indicator data yet - FRED may be loading",
       "fredKeyMissing": "FRED API key required — add it in Settings to enable economic indicators",
@@ -699,8 +701,8 @@
       "nuclear": "Nuclear"
     },
     "community": {
-      "joinDiscussion": "Join the Discussion",
-      "openDiscussion": "Open Discussion",
+      "joinCommunity": "Join the Community",
+      "openTelegram": "Open Telegram",
       "dontShowAgain": "Don't show again"
     },
     "threatLabels": {

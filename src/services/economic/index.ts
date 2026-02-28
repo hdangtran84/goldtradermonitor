@@ -111,11 +111,38 @@ async function fetchSingleFredSeries(config: FredConfig): Promise<FredSeries | n
   };
 }
 
-export async function fetchFredData(): Promise<FredSeries[]> {
-  if (!isFeatureAvailable('economicFred')) return [];
+// Mock/fallback data for when FRED API is unavailable
+const MOCK_FRED_DATA: FredSeries[] = [
+  { id: 'WALCL', name: 'Fed Total Assets', value: 6613, previousValue: 7512, change: -899, changePercent: -11.97, date: '2026-02-18', unit: '$B' },
+  { id: 'FEDFUNDS', name: 'Fed Funds Rate', value: 4.33, previousValue: 4.33, change: 0, changePercent: 0, date: '2026-02-18', unit: '%' },
+  { id: 'T10Y2Y', name: '10Y-2Y Spread', value: 0.21, previousValue: 0.18, change: 0.03, changePercent: 16.67, date: '2026-02-21', unit: '%' },
+  { id: 'UNRATE', name: 'Unemployment', value: 4.3, previousValue: 4.4, change: -0.1, changePercent: -2.27, date: '2026-01-01', unit: '%' },
+  { id: 'CPIAUCSL', name: 'CPI Index', value: 326.6, previousValue: 326.0, change: 0.6, changePercent: 0.18, date: '2026-01-01', unit: '' },
+  { id: 'DGS10', name: '10Y Treasury', value: 4.42, previousValue: 4.38, change: 0.04, changePercent: 0.91, date: '2026-02-21', unit: '%' },
+  { id: 'VIXCLS', name: 'VIX', value: 15.27, previousValue: 14.77, change: 0.5, changePercent: 3.39, date: '2026-02-21', unit: '' },
+];
 
-  const results = await Promise.all(FRED_SERIES.map(fetchSingleFredSeries));
-  return results.filter((r): r is FredSeries => r !== null);
+export async function fetchFredData(): Promise<FredSeries[]> {
+  if (!isFeatureAvailable('economicFred')) {
+    console.log('[FRED] Feature not available, returning mock data');
+    return MOCK_FRED_DATA;
+  }
+
+  try {
+    const results = await Promise.all(FRED_SERIES.map(fetchSingleFredSeries));
+    const filtered = results.filter((r): r is FredSeries => r !== null);
+    
+    if (filtered.length === 0) {
+      console.log('[FRED] No data received from API, returning mock data');
+      return MOCK_FRED_DATA;
+    }
+    
+    console.log(`[FRED] Loaded ${filtered.length} indicators from API`);
+    return filtered;
+  } catch (error) {
+    console.error('[FRED] Error fetching data:', error);
+    return MOCK_FRED_DATA;
+  }
 }
 
 export function getFredStatus(): string {

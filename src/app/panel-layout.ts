@@ -2,48 +2,26 @@ import type { AppContext, AppModule } from '@/app/app-context';
 import type { RelatedAsset } from '@/types';
 import type { TheaterPostureSummary } from '@/services/military-surge';
 import {
-  MapContainer,
+  GoldPriceChart,
+  GoldBrief,
   NewsPanel,
   MarketPanel,
   HeatmapPanel,
   CommoditiesPanel,
-  CryptoPanel,
   PredictionPanel,
   MonitorPanel,
   EconomicPanel,
-  GdeltIntelPanel,
   LiveNewsPanel,
-  LiveWebcamsPanel,
-  CIIPanel,
-  CascadePanel,
-  StrategicRiskPanel,
-  StrategicPosturePanel,
   TechEventsPanel,
   ServiceStatusPanel,
   RuntimeConfigPanel,
-  InsightsPanel,
+  EconomicCalendarPanel,
   TechReadinessPanel,
-  MacroSignalsPanel,
-  ETFFlowsPanel,
-  StablecoinPanel,
-  UcdpEventsPanel,
-  DisplacementPanel,
-  ClimateAnomalyPanel,
-  PopulationExposurePanel,
   InvestmentsPanel,
+  GivingPanel,
 } from '@/components';
-import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
-import { PositiveNewsFeedPanel } from '@/components/PositiveNewsFeedPanel';
-import { CountersPanel } from '@/components/CountersPanel';
-import { ProgressChartsPanel } from '@/components/ProgressChartsPanel';
-import { BreakthroughsTickerPanel } from '@/components/BreakthroughsTickerPanel';
-import { HeroSpotlightPanel } from '@/components/HeroSpotlightPanel';
-import { GoodThingsDigestPanel } from '@/components/GoodThingsDigestPanel';
-import { SpeciesComebackPanel } from '@/components/SpeciesComebackPanel';
-import { RenewableEnergyPanel } from '@/components/RenewableEnergyPanel';
-import { GivingPanel } from '@/components';
 import { focusInvestmentOnMap } from '@/services/investments-focus';
-import { debounce, saveToStorage } from '@/utils';
+import { saveToStorage } from '@/utils';
 import { escapeHtml } from '@/utils/sanitize';
 import {
   FEEDS,
@@ -68,14 +46,11 @@ export class PanelLayoutManager implements AppModule {
   private callbacks: PanelLayoutCallbacks;
   private panelDragCleanupHandlers: Array<() => void> = [];
   private criticalBannerEl: HTMLElement | null = null;
-  private readonly applyTimeRangeFilterDebounced: () => void;
+  // Note: Time range filter debounce removed - Gold Trader uses chart time range
 
   constructor(ctx: AppContext, callbacks: PanelLayoutCallbacks) {
     this.ctx = ctx;
     this.callbacks = callbacks;
-    this.applyTimeRangeFilterDebounced = debounce(() => {
-      this.applyTimeRangeFilterToNewsPanels();
-    }, 120);
   }
 
   init(): void {
@@ -89,86 +64,22 @@ export class PanelLayoutManager implements AppModule {
       this.criticalBannerEl.remove();
       this.criticalBannerEl = null;
     }
-    // Clean up happy variant panels
-    this.ctx.tvMode?.destroy();
-    this.ctx.tvMode = null;
-    this.ctx.countersPanel?.destroy();
-    this.ctx.progressPanel?.destroy();
-    this.ctx.breakthroughsPanel?.destroy();
-    this.ctx.heroPanel?.destroy();
-    this.ctx.digestPanel?.destroy();
-    this.ctx.speciesPanel?.destroy();
-    this.ctx.renewablePanel?.destroy();
   }
 
   renderLayout(): void {
     this.ctx.container.innerHTML = `
       <div class="header">
         <div class="header-left">
-          <div class="variant-switcher">${(() => {
-            const local = this.ctx.isDesktopApp || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            const vHref = (v: string, prod: string) => local || SITE_VARIANT === v ? '#' : prod;
-            const vTarget = (v: string) => !local && SITE_VARIANT !== v ? 'target="_blank" rel="noopener"' : '';
-            return `
-            <a href="${vHref('full', 'https://worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'full' ? 'active' : ''}"
-               data-variant="full"
-               ${vTarget('full')}
-               title="${t('header.world')}${SITE_VARIANT === 'full' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">🌍</span>
-              <span class="variant-label">${t('header.world')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('tech', 'https://tech.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'tech' ? 'active' : ''}"
-               data-variant="tech"
-               ${vTarget('tech')}
-               title="${t('header.tech')}${SITE_VARIANT === 'tech' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">💻</span>
-              <span class="variant-label">${t('header.tech')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('finance', 'https://finance.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'finance' ? 'active' : ''}"
-               data-variant="finance"
-               ${vTarget('finance')}
-               title="${t('header.finance')}${SITE_VARIANT === 'finance' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">📈</span>
-              <span class="variant-label">${t('header.finance')}</span>
-            </a>
-            ${SITE_VARIANT === 'happy' ? `<span class="variant-divider"></span>
-            <a href="${vHref('happy', 'https://happy.worldmonitor.app')}"
-               class="variant-option active"
-               data-variant="happy"
-               ${vTarget('happy')}
-               title="Good News ${t('common.currentVariant')}">
-              <span class="variant-icon">☀️</span>
-              <span class="variant-label">Good News</span>
-            </a>` : ''}`;
-          })()}</div>
-          <span class="logo">MONITOR</span><span class="version">v${__APP_VERSION__}</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
-          <a href="https://x.com/eliehabib" target="_blank" rel="noopener" class="credit-link">
-            <svg class="x-logo" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-            <span class="credit-text">@eliehabib</span>
-          </a>
-          <a href="https://github.com/koala73/worldmonitor" target="_blank" rel="noopener" class="github-link" title="${t('header.viewOnGitHub')}">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          </a>
+          <div class="variant-switcher">
+            <span class="variant-option active" title="Gold Trader">
+              <span class="variant-icon">🥇</span>
+              <span class="variant-label">GOLD</span>
+            </span>
+          </div>
+          <span class="logo">Daily Trading Tips</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
           <div class="status-indicator">
             <span class="status-dot"></span>
             <span>${t('header.live')}</span>
-          </div>
-          <div class="region-selector">
-            <select id="regionSelect" class="region-select">
-              <option value="global">${t('components.deckgl.views.global')}</option>
-              <option value="america">${t('components.deckgl.views.americas')}</option>
-              <option value="mena">${t('components.deckgl.views.mena')}</option>
-              <option value="eu">${t('components.deckgl.views.europe')}</option>
-              <option value="asia">${t('components.deckgl.views.asia')}</option>
-              <option value="latam">${t('components.deckgl.views.latam')}</option>
-              <option value="africa">${t('components.deckgl.views.africa')}</option>
-              <option value="oceania">${t('components.deckgl.views.oceania')}</option>
-            </select>
           </div>
         </div>
         <div class="header-right">
@@ -180,28 +91,23 @@ export class PanelLayoutManager implements AppModule {
         : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>'}
           </button>
           ${this.ctx.isDesktopApp ? '' : `<button class="fullscreen-btn" id="fullscreenBtn" title="${t('header.fullscreen')}">⛶</button>`}
-          ${SITE_VARIANT === 'happy' ? `<button class="tv-mode-btn" id="tvModeBtn" title="TV Mode (Shift+T)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></button>` : ''}
           <span id="unifiedSettingsMount"></span>
         </div>
       </div>
       <div class="main-content">
-        <div class="map-section" id="mapSection">
-          <div class="panel-header">
-            <div class="panel-header-left">
-              <span class="panel-title">${SITE_VARIANT === 'tech' ? t('panels.techMap') : SITE_VARIANT === 'happy' ? 'Good News Map' : t('panels.map')}</span>
+        <div class="top-dashboard-row" id="topDashboardRow">
+          <div class="map-section gold-chart-section" id="mapSection">
+            <div class="panel-header">
+              <div class="panel-header-left">
+                <span class="panel-title">Gold Price Chart</span>
+              </div>
+              <span class="header-clock" id="headerClock"></span>
             </div>
-            <span class="header-clock" id="headerClock"></span>
-            <button class="map-pin-btn" id="mapPinBtn" title="${t('header.pinMap')}">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 17v5M9 10.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V16a1 1 0 001 1h12a1 1 0 001-1v-.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V7a1 1 0 011-1 1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v1a1 1 0 001 1 1 1 0 011 1v3.76z"/>
-              </svg>
-            </button>
+            <div class="map-container gold-chart-mount" id="goldChartContainer"></div>
           </div>
-          <div class="map-container" id="mapContainer"></div>
-          ${SITE_VARIANT === 'happy' ? '<button class="tv-exit-btn" id="tvExitBtn">Exit TV Mode</button>' : ''}
-          <div class="map-resize-handle" id="mapResizeHandle"></div>
+          <div class="livestream-section" id="livestreamSection"></div>
         </div>
-        <div class="panels-grid" id="panelsGrid"></div>
+        <div class="panels-grid news-grid" id="panelsGrid"></div>
       </div>
     `;
 
@@ -286,6 +192,17 @@ export class PanelLayoutManager implements AppModule {
         }
         return;
       }
+      // Finance variant: force monitors visible, markets hidden
+      if (SITE_VARIANT === 'finance') {
+        if (key === 'monitors') {
+          this.ctx.panels[key]?.toggle(true);
+          return;
+        }
+        if (key === 'markets') {
+          this.ctx.panels[key]?.toggle(false);
+          return;
+        }
+      }
       const panel = this.ctx.panels[key];
       panel?.toggle(config.enabled);
     });
@@ -294,17 +211,43 @@ export class PanelLayoutManager implements AppModule {
   private createPanels(): void {
     const panelsGrid = document.getElementById('panelsGrid')!;
 
-    const mapContainer = document.getElementById('mapContainer') as HTMLElement;
-    this.ctx.map = new MapContainer(mapContainer, {
-      zoom: this.ctx.isMobile ? 2.5 : 1.0,
-      pan: { x: 0, y: 0 },
-      view: this.ctx.isMobile ? 'mena' : 'global',
-      layers: this.ctx.mapLayers,
-      timeRange: '7d',
-    });
+    // Initialize Gold Price Chart (replaces MapContainer for finance variant)
+    const goldChartContainer = document.getElementById('goldChartContainer') as HTMLElement;
+    if (goldChartContainer) {
+      const goldChart = new GoldPriceChart(goldChartContainer);
+      goldChart.init().catch((err) => {
+        console.error('[PanelLayout] Failed to initialize GoldPriceChart:', err);
+      });
+      // Store reference for potential cleanup
+      (this.ctx as unknown as { goldChart: GoldPriceChart }).goldChart = goldChart;
+    }
 
-    this.ctx.map.initEscalationGetters();
-    this.ctx.currentTimeRange = this.ctx.map.getTimeRange();
+    // Initialize AI-powered Gold Brief ticker (horizontal scrolling bar at top)
+    const goldBriefContainer = document.createElement('div');
+    goldBriefContainer.id = 'goldBriefContainer';
+    // Insert at start of main-content so it flows naturally before the dashboard
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent && mainContent.firstChild) {
+      mainContent.insertBefore(goldBriefContainer, mainContent.firstChild);
+    } else if (mainContent) {
+      mainContent.appendChild(goldBriefContainer);
+    } else {
+      // Fallback: after header
+      const header = document.querySelector('.header');
+      if (header && header.parentNode) {
+        header.parentNode.insertBefore(goldBriefContainer, header.nextSibling);
+      } else {
+        document.body.insertBefore(goldBriefContainer, document.body.firstChild);
+      }
+    }
+    const goldBrief = new GoldBrief(goldBriefContainer);
+    goldBrief.init().catch((err) => {
+      console.error('[PanelLayout] Failed to initialize GoldBrief:', err);
+    });
+    (this.ctx as unknown as { goldBrief: GoldBrief }).goldBrief = goldBrief;
+
+    // Set default time range since we no longer have map
+    this.ctx.currentTimeRange = '24h';
 
     const politicsPanel = new NewsPanel('politics', t('panels.politics'));
     this.attachRelatedAssetHandlers(politicsPanel);
@@ -350,9 +293,6 @@ export class PanelLayoutManager implements AppModule {
     this.attachRelatedAssetHandlers(intelPanel);
     this.ctx.newsPanels['intel'] = intelPanel;
     this.ctx.panels['intel'] = intelPanel;
-
-    const cryptoPanel = new CryptoPanel();
-    this.ctx.panels['crypto'] = cryptoPanel;
 
     const middleeastPanel = new NewsPanel('middleeast', t('panels.middleeast'));
     this.attachRelatedAssetHandlers(middleeastPanel);
@@ -480,57 +420,7 @@ export class PanelLayoutManager implements AppModule {
       this.ctx.panels[panelKey] = panel;
     }
 
-    if (SITE_VARIANT === 'full') {
-      const gdeltIntelPanel = new GdeltIntelPanel();
-      this.ctx.panels['gdelt-intel'] = gdeltIntelPanel;
-
-      const ciiPanel = new CIIPanel();
-      ciiPanel.setShareStoryHandler((code, name) => {
-        this.callbacks.openCountryStory(code, name);
-      });
-      this.ctx.panels['cii'] = ciiPanel;
-
-      const cascadePanel = new CascadePanel();
-      this.ctx.panels['cascade'] = cascadePanel;
-
-      const satelliteFiresPanel = new SatelliteFiresPanel();
-      this.ctx.panels['satellite-fires'] = satelliteFiresPanel;
-
-      const strategicRiskPanel = new StrategicRiskPanel();
-      strategicRiskPanel.setLocationClickHandler((lat, lon) => {
-        this.ctx.map?.setCenter(lat, lon, 4);
-      });
-      this.ctx.panels['strategic-risk'] = strategicRiskPanel;
-
-      const strategicPosturePanel = new StrategicPosturePanel();
-      strategicPosturePanel.setLocationClickHandler((lat, lon) => {
-        console.log('[App] StrategicPosture handler called:', { lat, lon, hasMap: !!this.ctx.map });
-        this.ctx.map?.setCenter(lat, lon, 4);
-      });
-      this.ctx.panels['strategic-posture'] = strategicPosturePanel;
-
-      const ucdpEventsPanel = new UcdpEventsPanel();
-      ucdpEventsPanel.setEventClickHandler((lat, lon) => {
-        this.ctx.map?.setCenter(lat, lon, 5);
-      });
-      this.ctx.panels['ucdp-events'] = ucdpEventsPanel;
-
-      const displacementPanel = new DisplacementPanel();
-      displacementPanel.setCountryClickHandler((lat, lon) => {
-        this.ctx.map?.setCenter(lat, lon, 4);
-      });
-      this.ctx.panels['displacement'] = displacementPanel;
-
-      const climatePanel = new ClimateAnomalyPanel();
-      climatePanel.setZoneClickHandler((lat, lon) => {
-        this.ctx.map?.setCenter(lat, lon, 4);
-      });
-      this.ctx.panels['climate'] = climatePanel;
-
-      const populationExposurePanel = new PopulationExposurePanel();
-      this.ctx.panels['population-exposure'] = populationExposurePanel;
-    }
-
+    // Finance variant: Investments panel
     if (SITE_VARIANT === 'finance') {
       const investmentsPanel = new InvestmentsPanel((inv) => {
         focusInvestmentOnMap(this.ctx.map, this.ctx.mapLayers, inv.lat, inv.lon);
@@ -538,12 +428,19 @@ export class PanelLayoutManager implements AppModule {
       this.ctx.panels['gcc-investments'] = investmentsPanel;
     }
 
+    // Live News and related panels (all non-happy variants)
     if (SITE_VARIANT !== 'happy') {
       const liveNewsPanel = new LiveNewsPanel();
       this.ctx.panels['live-news'] = liveNewsPanel;
 
-      const liveWebcamsPanel = new LiveWebcamsPanel();
-      this.ctx.panels['live-webcams'] = liveWebcamsPanel;
+      // Mount LiveNewsPanel to the livestream section (side-by-side with chart)
+      const livestreamSection = document.getElementById('livestreamSection');
+      if (livestreamSection) {
+        const el = liveNewsPanel.getElement();
+        el.classList.remove('panel-wide'); // Remove wide class for sidebar layout
+        el.classList.add('livestream-panel');
+        livestreamSection.appendChild(el);
+      }
 
       this.ctx.panels['events'] = new TechEventsPanel('events');
 
@@ -552,10 +449,6 @@ export class PanelLayoutManager implements AppModule {
 
       const techReadinessPanel = new TechReadinessPanel();
       this.ctx.panels['tech-readiness'] = techReadinessPanel;
-
-      this.ctx.panels['macro-signals'] = new MacroSignalsPanel();
-      this.ctx.panels['etf-flows'] = new ETFFlowsPanel();
-      this.ctx.panels['stablecoins'] = new StablecoinPanel();
     }
 
     if (this.ctx.isDesktopApp) {
@@ -563,43 +456,15 @@ export class PanelLayoutManager implements AppModule {
       this.ctx.panels['runtime-config'] = runtimeConfigPanel;
     }
 
-    const insightsPanel = new InsightsPanel();
-    this.ctx.panels['insights'] = insightsPanel;
+    // Economic Calendar panel
+    const economicCalendarPanel = new EconomicCalendarPanel();
+    this.ctx.panels['economic-calendar'] = economicCalendarPanel;
+    economicCalendarPanel.init().catch(err => {
+      console.error('[PanelLayout] Failed to initialize EconomicCalendarPanel:', err);
+    });
 
-    // Global Giving panel (all variants)
+    // Global Giving panel
     this.ctx.panels['giving'] = new GivingPanel();
-
-    // Happy variant panels
-    if (SITE_VARIANT === 'happy') {
-      this.ctx.positivePanel = new PositiveNewsFeedPanel();
-      this.ctx.panels['positive-feed'] = this.ctx.positivePanel;
-
-      this.ctx.countersPanel = new CountersPanel();
-      this.ctx.panels['counters'] = this.ctx.countersPanel;
-      this.ctx.countersPanel.startTicking();
-
-      this.ctx.progressPanel = new ProgressChartsPanel();
-      this.ctx.panels['progress'] = this.ctx.progressPanel;
-
-      this.ctx.breakthroughsPanel = new BreakthroughsTickerPanel();
-      this.ctx.panels['breakthroughs'] = this.ctx.breakthroughsPanel;
-
-      this.ctx.heroPanel = new HeroSpotlightPanel();
-      this.ctx.panels['spotlight'] = this.ctx.heroPanel;
-      this.ctx.heroPanel.onLocationRequest = (lat: number, lon: number) => {
-        this.ctx.map?.setCenter(lat, lon, 4);
-        this.ctx.map?.flashLocation(lat, lon, 3000);
-      };
-
-      this.ctx.digestPanel = new GoodThingsDigestPanel();
-      this.ctx.panels['digest'] = this.ctx.digestPanel;
-
-      this.ctx.speciesPanel = new SpeciesComebackPanel();
-      this.ctx.panels['species'] = this.ctx.speciesPanel;
-
-      this.ctx.renewablePanel = new RenewableEnergyPanel();
-      this.ctx.panels['renewable'] = this.ctx.renewablePanel;
-    }
 
     const defaultOrder = Object.keys(DEFAULT_PANELS).filter(k => k !== 'map');
     const savedOrder = this.getSavedPanelOrder();
@@ -619,17 +484,10 @@ export class PanelLayoutManager implements AppModule {
     }
 
     if (SITE_VARIANT !== 'happy') {
+      // Remove live-news from panelOrder since it's now in livestreamSection
       const liveNewsIdx = panelOrder.indexOf('live-news');
-      if (liveNewsIdx > 0) {
+      if (liveNewsIdx !== -1) {
         panelOrder.splice(liveNewsIdx, 1);
-        panelOrder.unshift('live-news');
-      }
-
-      const webcamsIdx = panelOrder.indexOf('live-webcams');
-      if (webcamsIdx !== -1 && webcamsIdx !== panelOrder.indexOf('live-news') + 1) {
-        panelOrder.splice(webcamsIdx, 1);
-        const afterNews = panelOrder.indexOf('live-news') + 1;
-        panelOrder.splice(afterNews, 0, 'live-webcams');
       }
     }
 
@@ -643,6 +501,35 @@ export class PanelLayoutManager implements AppModule {
       }
     }
 
+    // Finance variant: ensure monitors is in panelOrder (replaces markets)
+    if (SITE_VARIANT === 'finance') {
+      // Ensure economic-calendar is in panelOrder
+      if (!panelOrder.includes('economic-calendar')) {
+        // Insert at position 1 (after first panel)
+        panelOrder.splice(1, 0, 'economic-calendar');
+      }
+      if (!panelOrder.includes('monitors')) {
+        // Insert monitors after economic-calendar (or at start if not found)
+        const calendarIdx = panelOrder.indexOf('economic-calendar');
+        panelOrder.splice(calendarIdx !== -1 ? calendarIdx + 1 : 0, 0, 'monitors');
+      }
+      // Remove markets from panelOrder since it's disabled in finance
+      const marketsIdx = panelOrder.indexOf('markets');
+      if (marketsIdx !== -1) {
+        panelOrder.splice(marketsIdx, 1);
+      }
+      // Remove insights from panelOrder (replaced by economic-calendar)
+      const insightsIdx = panelOrder.indexOf('insights');
+      if (insightsIdx !== -1) {
+        panelOrder.splice(insightsIdx, 1);
+      }
+      // Remove markets-news from panelOrder (disabled in finance, replaced by economic-calendar)
+      const marketsNewsIdx = panelOrder.indexOf('markets-news');
+      if (marketsNewsIdx !== -1) {
+        panelOrder.splice(marketsNewsIdx, 1);
+      }
+    }
+
     panelOrder.forEach((key: string) => {
       const panel = this.ctx.panels[key];
       if (panel) {
@@ -652,49 +539,9 @@ export class PanelLayoutManager implements AppModule {
       }
     });
 
-    this.ctx.map.onTimeRangeChanged((range) => {
-      this.ctx.currentTimeRange = range;
-      this.applyTimeRangeFilterDebounced();
-    });
-
+    // Map time range handler removed - Gold Trader uses chart time range instead
     this.applyPanelSettings();
     this.applyInitialUrlState();
-  }
-
-  private applyTimeRangeFilterToNewsPanels(): void {
-    Object.entries(this.ctx.newsByCategory).forEach(([category, items]) => {
-      const panel = this.ctx.newsPanels[category];
-      if (!panel) return;
-      const filtered = this.filterItemsByTimeRange(items);
-      if (filtered.length === 0 && items.length > 0) {
-        panel.renderFilteredEmpty(`No items in ${this.getTimeRangeLabel()}`);
-        return;
-      }
-      panel.renderNews(filtered);
-    });
-  }
-
-  private filterItemsByTimeRange(items: import('@/types').NewsItem[], range: import('@/components').TimeRange = this.ctx.currentTimeRange): import('@/types').NewsItem[] {
-    if (range === 'all') return items;
-    const ranges: Record<string, number> = {
-      '1h': 60 * 60 * 1000, '6h': 6 * 60 * 60 * 1000,
-      '24h': 24 * 60 * 60 * 1000, '48h': 48 * 60 * 60 * 1000,
-      '7d': 7 * 24 * 60 * 60 * 1000, 'all': Infinity,
-    };
-    const cutoff = Date.now() - (ranges[range] ?? Infinity);
-    return items.filter((item) => {
-      const ts = item.pubDate instanceof Date ? item.pubDate.getTime() : new Date(item.pubDate).getTime();
-      return Number.isFinite(ts) ? ts >= cutoff : true;
-    });
-  }
-
-  private getTimeRangeLabel(): string {
-    const labels: Record<string, string> = {
-      '1h': 'the last hour', '6h': 'the last 6 hours',
-      '24h': 'the last 24 hours', '48h': 'the last 48 hours',
-      '7d': 'the last 7 days', 'all': 'all time',
-    };
-    return labels[this.ctx.currentTimeRange] ?? 'the last 7 days';
   }
 
   private applyInitialUrlState(): void {
@@ -759,6 +606,7 @@ export class PanelLayoutManager implements AppModule {
   }
 
   private handleRelatedAssetClick(asset: RelatedAsset): void {
+    // Map removed for Gold Trader - related asset clicks are no-op
     if (!this.ctx.map) return;
 
     switch (asset.type) {
@@ -780,18 +628,7 @@ export class PanelLayoutManager implements AppModule {
         saveToStorage(STORAGE_KEYS.mapLayers, this.ctx.mapLayers);
         this.ctx.map.triggerDatacenterClick(asset.id);
         break;
-      case 'base':
-        this.ctx.map.enableLayer('bases');
-        this.ctx.mapLayers.bases = true;
-        saveToStorage(STORAGE_KEYS.mapLayers, this.ctx.mapLayers);
-        this.ctx.map.triggerBaseClick(asset.id);
-        break;
-      case 'nuclear':
-        this.ctx.map.enableLayer('nuclear');
-        this.ctx.mapLayers.nuclear = true;
-        saveToStorage(STORAGE_KEYS.mapLayers, this.ctx.mapLayers);
-        this.ctx.map.triggerNuclearClick(asset.id);
-        break;
+      // Note: 'base' and 'nuclear' cases removed - map layers no longer exist
     }
   }
 

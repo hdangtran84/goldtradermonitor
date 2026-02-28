@@ -68,7 +68,7 @@ const defaultToggles: Record<RuntimeFeatureId, boolean> = {
   aiGroq: true,
   aiOpenRouter: true,
   economicFred: true,
-  energyEia: true,
+  energyEia: false, // Disabled - not needed for gold trading
   internetOutages: true,
   acledConflicts: true,
   abuseChThreatIntel: true,

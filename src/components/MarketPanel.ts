@@ -1,6 +1,6 @@
 import { Panel } from './Panel';
 import { t } from '@/services/i18n';
-import type { MarketData, CryptoData } from '@/types';
+import type { MarketData } from '@/types';
 import { formatPrice, formatChange, getChangeClass, getHeatmapClass } from '@/utils';
 import { escapeHtml } from '@/utils/sanitize';
 
@@ -117,35 +117,4 @@ export class CommoditiesPanel extends Panel {
   }
 }
 
-export class CryptoPanel extends Panel {
-  constructor() {
-    super({ id: 'crypto', title: t('panels.crypto') });
-  }
 
-  public renderCrypto(data: CryptoData[]): void {
-    if (data.length === 0) {
-      this.showError(t('common.failedCryptoData'));
-      return;
-    }
-
-    const html = data
-      .map(
-        (coin) => `
-      <div class="market-item">
-        <div class="market-info">
-          <span class="market-name">${escapeHtml(coin.name)}</span>
-          <span class="market-symbol">${escapeHtml(coin.symbol)}</span>
-        </div>
-        <div class="market-data">
-          ${miniSparkline(coin.sparkline, coin.change)}
-          <span class="market-price">$${coin.price.toLocaleString()}</span>
-          <span class="market-change ${getChangeClass(coin.change)}">${formatChange(coin.change)}</span>
-        </div>
-      </div>
-    `
-      )
-      .join('');
-
-    this.setContent(html);
-  }
-}

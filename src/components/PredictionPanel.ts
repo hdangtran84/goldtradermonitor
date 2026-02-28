@@ -7,8 +7,8 @@ export class PredictionPanel extends Panel {
   constructor() {
     super({
       id: 'polymarket',
-      title: t('panels.polymarket'),
-      infoTooltip: t('components.prediction.infoTooltip'),
+      title: 'Gold Price Markets',
+      infoTooltip: 'Polymarket prediction markets for Gold (XAU/USD) price milestones',
     });
   }
 
@@ -21,7 +21,14 @@ export class PredictionPanel extends Panel {
 
   public renderPredictions(data: PredictionMarket[]): void {
     if (data.length === 0) {
-      this.showError(t('common.failedPredictions'));
+      this.setContent(`
+        <div class="gold-markets-empty">
+          <div class="gold-icon">📊</div>
+          <div class="empty-title">No Active Gold Markets</div>
+          <div class="empty-message">No active Gold price prediction markets on Polymarket at the moment.</div>
+          <div class="empty-refresh">Data refreshes every 5 minutes</div>
+        </div>
+      `);
       return;
     }
 
@@ -33,18 +40,27 @@ export class PredictionPanel extends Panel {
 
         const safeUrl = sanitizeUrl(p.url || '');
         const titleHtml = safeUrl
-          ? `<a href="${safeUrl}" target="_blank" rel="noopener" class="prediction-question prediction-link">${escapeHtml(p.title)}</a>`
-          : `<div class="prediction-question">${escapeHtml(p.title)}</div>`;
+          ? `<a href="${safeUrl}" target="_blank" rel="noopener" class="prediction-question prediction-link gold-market-link">${escapeHtml(p.title)}</a>`
+          : `<div class="prediction-question gold-market-title">${escapeHtml(p.title)}</div>`;
+
+        // Determine if odds favor Yes or No
+        const yesFavored = yesPercent >= 50;
+        const oddsClass = yesFavored ? 'odds-yes-favored' : 'odds-no-favored';
 
         return `
-      <div class="prediction-item">
+      <div class="prediction-item gold-market-card">
         ${titleHtml}
-        ${volumeStr ? `<div class="prediction-volume">${t('components.predictions.vol')}: ${volumeStr}</div>` : ''}
-        <div class="prediction-bar">
-          <div class="prediction-yes" style="width: ${yesPercent}%">
+        <div class="gold-market-stats">
+          ${volumeStr ? `<span class="prediction-volume gold-volume"><span class="stat-label">Vol:</span> ${volumeStr}</span>` : ''}
+          <span class="gold-odds ${oddsClass}">
+            <span class="stat-label">Odds:</span> ${yesPercent}%
+          </span>
+        </div>
+        <div class="prediction-bar gold-prediction-bar">
+          <div class="prediction-yes gold-yes" style="width: ${yesPercent}%">
             <span class="prediction-label">${t('components.predictions.yes')} ${yesPercent}%</span>
           </div>
-          <div class="prediction-no" style="width: ${noPercent}%">
+          <div class="prediction-no gold-no" style="width: ${noPercent}%">
             <span class="prediction-label">${t('components.predictions.no')} ${noPercent}%</span>
           </div>
         </div>
@@ -53,6 +69,14 @@ export class PredictionPanel extends Panel {
       })
       .join('');
 
-    this.setContent(html);
+    const headerHtml = `
+      <div class="gold-markets-header">
+        <span class="gold-header-icon">🥇</span>
+        <span class="gold-header-text">Gold (XAU/USD) Prediction Markets</span>
+        <span class="gold-market-count">${data.length} active</span>
+      </div>
+    `;
+
+    this.setContent(headerHtml + html);
   }
 }

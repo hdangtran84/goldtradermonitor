@@ -1,6 +1,5 @@
 import type { MilitaryFlight, MilitaryOperator } from '@/types';
 import type { SignalType } from '@/utils/analysis-constants';
-import { MILITARY_BASES_EXPANDED } from '@/config/bases-expanded';
 import { focalPointDetector } from './focal-point-detector';
 import { getCountryScore } from './country-instability';
 
@@ -156,7 +155,7 @@ const BASELINE_MIN_SAMPLES = 6;
 const TRANSPORT_CALLSIGN_PATTERNS = [
   /^RCH/i, /^REACH/i, /^MOOSE/i, /^HERKY/i, /^EVAC/i, /^DUSTOFF/i,
 ];
-const PROXIMITY_RADIUS_KM = 150;
+export const PROXIMITY_RADIUS_KM = 150;
 
 const activityHistory = new Map<string, TheaterActivity[]>();
 const activeSurges = new Map<string, SurgeAlert>();
@@ -183,15 +182,9 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): num
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function findNearbyBases(lat: number, lon: number): { baseId: string; baseName: string; distance: number }[] {
-  const nearby: { baseId: string; baseName: string; distance: number }[] = [];
-  for (const base of MILITARY_BASES_EXPANDED) {
-    const dist = distanceKm(lat, lon, base.lat, base.lon);
-    if (dist <= PROXIMITY_RADIUS_KM) {
-      nearby.push({ baseId: base.id, baseName: base.name, distance: dist });
-    }
-  }
-  return nearby.sort((a, b) => a.distance - b.distance);
+function findNearbyBases(_lat: number, _lon: number): { baseId: string; baseName: string; distance: number }[] {
+  // Military bases layer has been removed
+  return [];
 }
 
 function isTransportFlight(flight: MilitaryFlight): boolean {

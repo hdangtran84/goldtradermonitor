@@ -10,17 +10,8 @@ import type { CountryTimeline } from '@/components/CountryTimeline';
 import type { PlaybackControl } from '@/components';
 import type { ExportPanel } from '@/utils';
 import type { UnifiedSettings } from '@/components/UnifiedSettings';
-import type { MobileWarningModal, PizzIntIndicator } from '@/components';
+import type { MobileWarningModal } from '@/components';
 import type { ParsedMapUrlState } from '@/utils';
-import type { PositiveNewsFeedPanel } from '@/components/PositiveNewsFeedPanel';
-import type { CountersPanel } from '@/components/CountersPanel';
-import type { ProgressChartsPanel } from '@/components/ProgressChartsPanel';
-import type { BreakthroughsTickerPanel } from '@/components/BreakthroughsTickerPanel';
-import type { HeroSpotlightPanel } from '@/components/HeroSpotlightPanel';
-import type { GoodThingsDigestPanel } from '@/components/GoodThingsDigestPanel';
-import type { SpeciesComebackPanel } from '@/components/SpeciesComebackPanel';
-import type { RenewableEnergyPanel } from '@/components/RenewableEnergyPanel';
-import type { TvModeController } from '@/services/tv-mode';
 
 export interface CountryBriefSignals {
   protests: number;
@@ -82,21 +73,9 @@ export interface AppContext {
   exportPanel: ExportPanel | null;
   unifiedSettings: UnifiedSettings | null;
   mobileWarningModal: MobileWarningModal | null;
-  pizzintIndicator: PizzIntIndicator | null;
   countryBriefPage: CountryBriefPage | null;
   countryTimeline: CountryTimeline | null;
 
-  // Happy variant state
-  positivePanel: PositiveNewsFeedPanel | null;
-  countersPanel: CountersPanel | null;
-  progressPanel: ProgressChartsPanel | null;
-  breakthroughsPanel: BreakthroughsTickerPanel | null;
-  heroPanel: HeroSpotlightPanel | null;
-  digestPanel: GoodThingsDigestPanel | null;
-  speciesPanel: SpeciesComebackPanel | null;
-  renewablePanel: RenewableEnergyPanel | null;
-  tvMode: TvModeController | null;
-  happyAllItems: NewsItem[];
   isDestroyed: boolean;
   isPlaybackMode: boolean;
   isIdle: boolean;

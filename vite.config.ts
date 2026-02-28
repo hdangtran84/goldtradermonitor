@@ -1,10 +1,35 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, type Plugin, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve, dirname, extname } from 'path';
 import { mkdir, readFile, writeFile } from 'fs/promises';
+import { readFileSync, existsSync } from 'fs';
 import { brotliCompress } from 'zlib';
 import { promisify } from 'util';
 import pkg from './package.json';
+
+// Load .env files at module level for process.env access in plugins
+function loadEnvFiles() {
+  const envFiles = ['.env', '.env.local'];
+  for (const file of envFiles) {
+    const filePath = resolve(process.cwd(), file);
+    if (existsSync(filePath)) {
+      const content = readFileSync(filePath, 'utf-8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIndex = trimmed.indexOf('=');
+        if (eqIndex > 0) {
+          const key = trimmed.slice(0, eqIndex).trim();
+          const value = trimmed.slice(eqIndex + 1).trim();
+          if (!process.env[key]) {
+            process.env[key] = value;
+          }
+        }
+      }
+    }
+  }
+}
+loadEnvFiles();
 
 const isE2E = process.env.VITE_E2E === '1';
 
@@ -118,27 +143,25 @@ const VARIANT_META: Record<string, {
     ],
   },
   finance: {
-    title: 'Finance Monitor - Real-Time Markets & Trading Dashboard',
-    description: 'Real-time finance and trading dashboard tracking global markets, stock exchanges, central banks, commodities, forex, crypto, and economic indicators worldwide.',
-    keywords: 'finance dashboard, trading dashboard, stock market, forex, commodities, central banks, crypto, economic indicators, market news, financial centers, stock exchanges, bonds, derivatives, fintech, hedge funds, IPO tracker, market analysis',
-    url: 'https://finance.worldmonitor.app/',
-    siteName: 'Finance Monitor',
-    shortName: 'FinanceMonitor',
-    subject: 'Global Markets, Trading, and Financial Intelligence',
-    classification: 'Finance Dashboard, Market Tracker, Trading Intelligence',
-    categories: ['finance', 'news'],
+    title: 'Gold Trader - Live Gold Trading Dashboard',
+    description: 'Real-time gold trading dashboard tracking precious metals markets, commodities, central banks, forex, and economic indicators that impact gold prices.',
+    keywords: 'gold trading, gold price, precious metals, gold market, commodities, central banks, gold ETF, gold futures, trading dashboard, economic indicators, gold investment, XAUUSD, gold news, gold analysis',
+    url: 'https://goldtrader.app/',
+    siteName: 'Gold Trader',
+    shortName: 'GoldTrader',
+    subject: 'Gold Trading, Precious Metals, and Market Intelligence',
+    classification: 'Gold Trading Dashboard, Precious Metals Tracker',
+    categories: ['finance', 'trading'],
     features: [
-      'Real-time market data',
-      'Stock exchange mapping',
-      'Central bank monitoring',
-      'Commodity price tracking',
-      'Forex & currency news',
-      'Crypto & digital assets',
+      'Real-time gold prices',
+      'Precious metals tracking',
+      'Central bank gold reserves',
+      'Commodity futures',
       'Economic indicator alerts',
-      'IPO & earnings tracking',
-      'Financial center mapping',
-      'Sector heatmap',
+      'Gold ETF tracking',
       'Market radar signals',
+      'Forex & currency impact',
+      'AI market insights',
     ],
   },
 };
@@ -580,6 +603,119 @@ function rssProxyPlugin(): Plugin {
   };
 }
 
+function goldBriefPlugin(): Plugin {
+  const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+  const GOLD_BRIEF_PROMPT = `You are a professional gold market analyst. Provide a concise market brief (3-5 sentences) covering:
+
+1. Current gold price context and recent movement
+2. Key factors affecting gold: Fed rate expectations, inflation data, USD strength, geopolitical tensions
+3. Short-term outlook (next 7 days): clearly state BULLISH, BEARISH, or NEUTRAL with reasoning
+
+Be direct and actionable. Focus only on factors relevant to gold traders. No disclaimers.`;
+
+  return {
+    name: 'gold-brief-dev',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url?.startsWith('/api/gold-brief')) return next();
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        if (!GROQ_API_KEY) {
+          res.statusCode = 503;
+          res.end(JSON.stringify({ error: 'GROQ_API_KEY not configured', brief: null, timestamp: null }));
+          return;
+        }
+
+        try {
+          // Fetch current gold price context from Yahoo Finance
+          let priceContext = '';
+          try {
+            const priceRes = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d&range=5d');
+            if (priceRes.ok) {
+              const priceData = await priceRes.json();
+              const result = priceData?.chart?.result?.[0];
+              if (result?.meta) {
+                const currentPrice = result.meta.regularMarketPrice;
+                const prevClose = result.meta.previousClose;
+                const change = ((currentPrice - prevClose) / prevClose * 100).toFixed(2);
+                const high52w = result.meta.fiftyTwoWeekHigh;
+                const low52w = result.meta.fiftyTwoWeekLow;
+                priceContext = `Current gold price: $${currentPrice.toFixed(2)} (${Number(change) >= 0 ? '+' : ''}${change}% today). 52-week range: $${low52w.toFixed(2)} - $${high52w.toFixed(2)}.`;
+              }
+            }
+          } catch (e) {
+            console.warn('[gold-brief] Failed to fetch price context:', e);
+          }
+
+          // Generate brief using Groq Llama
+          const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${GROQ_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'llama-3.1-8b-instant',
+              messages: [
+                { role: 'system', content: GOLD_BRIEF_PROMPT },
+                { role: 'user', content: `${priceContext}\n\nGenerate a gold market brief for ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.` },
+              ],
+              max_tokens: 300,
+              temperature: 0.7,
+            }),
+          });
+
+          if (!groqRes.ok) {
+            const errText = await groqRes.text();
+            console.error('[gold-brief] Groq API error:', groqRes.status, errText);
+            if (groqRes.status === 429) {
+              res.statusCode = 429;
+              res.end(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.', brief: null, timestamp: null }));
+              return;
+            }
+            res.statusCode = 502;
+            res.end(JSON.stringify({ error: 'Failed to generate brief', brief: null, timestamp: null }));
+            return;
+          }
+
+          const groqData = await groqRes.json();
+          const brief = groqData.choices?.[0]?.message?.content?.trim() || '';
+
+          if (!brief) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: 'Empty response from AI', brief: null, timestamp: null }));
+            return;
+          }
+
+          // Detect sentiment from brief
+          let sentiment = 'neutral';
+          const lowerBrief = brief.toLowerCase();
+          if (lowerBrief.includes('bullish') || lowerBrief.includes('upward') || lowerBrief.includes('rally')) {
+            sentiment = 'bullish';
+          } else if (lowerBrief.includes('bearish') || lowerBrief.includes('downward') || lowerBrief.includes('decline')) {
+            sentiment = 'bearish';
+          }
+
+          res.setHeader('Cache-Control', 'public, max-age=60');
+          res.end(JSON.stringify({
+            brief,
+            sentiment,
+            timestamp: new Date().toISOString(),
+            model: 'llama-3.1-8b-instant',
+            error: null,
+          }));
+        } catch (err) {
+          console.error('[gold-brief] Error:', err);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: 'Internal error', brief: null, timestamp: null }));
+        }
+      });
+    },
+  };
+}
+
 function youtubeLivePlugin(): Plugin {
   return {
     name: 'youtube-live',
@@ -655,6 +791,7 @@ export default defineConfig({
     polymarketPlugin(),
     rssProxyPlugin(),
     youtubeLivePlugin(),
+    goldBriefPlugin(),
     sebufApiPlugin(),
     brotliPrecompressPlugin(),
     VitePWA({
@@ -929,6 +1066,54 @@ export default defineConfig({
           const end = url.searchParams.get('observation_end');
           const apiKey = process.env.FRED_API_KEY || '';
           return `/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=10${start ? `&observation_start=${start}` : ''}${end ? `&observation_end=${end}` : ''}`;
+        },
+      },
+      // Alpha Vantage Gold Price - proxies XAU/USD forex intraday data
+      '/api/gold-price': {
+        target: 'https://www.alphavantage.co',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          const interval = url.searchParams.get('interval') || '1min';
+          const outputsize = url.searchParams.get('outputsize') || 'compact';
+          const apiKey = process.env.ALPHA_VANTAGE_API_KEY || '';
+          return `/query?function=FX_INTRADAY&from_symbol=XAU&to_symbol=USD&interval=${interval}&outputsize=${outputsize}&apikey=${apiKey}`;
+        },
+      },
+      // Finnhub Economic Calendar - high-impact US economic events
+      '/api/economic-calendar': {
+        target: 'https://finnhub.io',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          const daysParam = parseInt(url.searchParams.get('days') || '7', 10);
+          const days = Math.min(Math.max(daysParam, 1), 14);
+          const today = new Date();
+          const fromDate = new Date(today);
+          fromDate.setDate(fromDate.getDate() - 2);
+          const toDate = new Date(today);
+          toDate.setDate(toDate.getDate() + days);
+          const formatDate = (d: Date) => d.toISOString().split('T')[0];
+          const apiKey = process.env.FINNHUB_API_KEY || '';
+          return `/api/v1/calendar/economic?from=${formatDate(fromDate)}&to=${formatDate(toDate)}&token=${apiKey}`;
+        },
+      },
+      // FXStreet Economic Calendar - real-time USD high-impact events
+      '/api/forex-factory-calendar': {
+        target: 'https://calendar-api.fxstreet.com',
+        changeOrigin: true,
+        headers: {
+          'Origin': 'https://www.fxstreet.com',
+          'Referer': 'https://www.fxstreet.com/',
+        },
+        rewrite: () => {
+          const today = new Date();
+          const fromDate = new Date(today);
+          fromDate.setDate(fromDate.getDate() - 2);
+          const toDate = new Date(today);
+          toDate.setDate(toDate.getDate() + 7);
+          const formatDate = (d: Date) => d.toISOString().split('T')[0];
+          return `/en/api/v1/eventDates/${formatDate(fromDate)}/${formatDate(toDate)}`;
         },
       },
       // RSS Feeds - BBC
@@ -1208,11 +1393,36 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/nga-msi/, ''),
       },
+      // GDELT Sentiment API for Gold news - direct to GDELT in dev mode
+      '/api/gdelt-sentiment': {
+        target: 'https://api.gdeltproject.org',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => {
+          // Extract query params and forward to GDELT DOC API
+          const url = new URL(path, 'http://localhost');
+          const query = url.searchParams.get('query') || 'gold';
+          const maxrecords = url.searchParams.get('maxrecords') || '30';
+          return `/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=artlist&maxrecords=${maxrecords}&format=json`;
+        },
+      },
       // GDELT GEO 2.0 API - Global event data
       '/api/gdelt': {
         target: 'https://api.gdeltproject.org',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/gdelt/, ''),
+      },
+      // CoinGecko API - Crypto prices (XAUT/USDT for 24/7 Gold)
+      '/api/coingecko': {
+        target: 'https://api.coingecko.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api\/coingecko/, ''),
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.log('CoinGecko proxy error:', err.message);
+          });
+        },
       },
       // AISStream WebSocket proxy for live vessel tracking
       '/ws/aisstream': {

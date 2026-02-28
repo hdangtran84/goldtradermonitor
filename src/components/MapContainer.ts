@@ -31,10 +31,11 @@ import type { DisplacementFlow } from '@/services/displacement';
 import type { Earthquake } from '@/services/earthquakes';
 import type { ClimateAnomaly } from '@/services/climate';
 import type { WeatherAlert } from '@/services/weather';
-import type { PositiveGeoEvent } from '@/services/positive-events-geo';
-import type { KindnessPoint } from '@/services/kindness-data';
-import type { HappinessData } from '@/services/happiness-data';
-import type { SpeciesRecovery } from '@/services/conservation-data';
+// Stub types for removed happy variant services
+type PositiveGeoEvent = { lat: number; lon: number; category: string; title?: string; count?: number; name: string };
+type KindnessPoint = { lat: number; lon: number; type: string };
+type HappinessData = { code: string; score: number; scores?: number[]; year?: number; source?: string };
+type SpeciesRecovery = { name: string; recoveryZone?: { name: string; lat: number; lon: number } };
 import type { RenewableInstallation } from '@/services/renewable-installations';
 
 export type TimeRange = '1h' | '6h' | '24h' | '48h' | '7d' | 'all';

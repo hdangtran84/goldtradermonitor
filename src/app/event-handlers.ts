@@ -7,8 +7,6 @@ import {
   PlaybackControl,
   StatusPanel,
   MobileWarningModal,
-  PizzIntIndicator,
-  CIIPanel,
   PredictionPanel,
 } from '@/components';
 import {
@@ -21,11 +19,10 @@ import {
 } from '@/utils';
 import {
   STORAGE_KEYS,
-  SITE_VARIANT,
   LAYER_TO_SOURCE,
   FEEDS,
   INTEL_SOURCES,
-  DEFAULT_PANELS,
+  SITE_VARIANT,
 } from '@/config';
 import {
   saveSnapshot,
@@ -34,7 +31,6 @@ import {
 } from '@/services';
 import {
   trackPanelView,
-  trackVariantSwitch,
   trackThemeChanged,
   trackMapViewChange,
   trackMapLayerToggle,
@@ -45,7 +41,7 @@ import { dataFreshness } from '@/services/data-freshness';
 import { mlWorker } from '@/services/ml-worker';
 import { UnifiedSettings } from '@/components/UnifiedSettings';
 import { t } from '@/services/i18n';
-import { TvModeController } from '@/services/tv-mode';
+
 
 export interface EventHandlerCallbacks {
   updateSearchIndex: () => void;
@@ -79,48 +75,6 @@ export class EventHandlerManager implements AppModule {
   init(): void {
     this.setupEventListeners();
     this.setupIdleDetection();
-    this.setupTvMode();
-  }
-
-  private setupTvMode(): void {
-    if (SITE_VARIANT !== 'happy') return;
-
-    const tvBtn = document.getElementById('tvModeBtn');
-    const tvExitBtn = document.getElementById('tvExitBtn');
-    if (tvBtn) {
-      tvBtn.addEventListener('click', () => this.toggleTvMode());
-    }
-    if (tvExitBtn) {
-      tvExitBtn.addEventListener('click', () => this.toggleTvMode());
-    }
-    // Keyboard shortcut: Shift+T
-    document.addEventListener('keydown', (e) => {
-      if (e.shiftKey && e.key === 'T' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const active = document.activeElement;
-        if (active?.tagName !== 'INPUT' && active?.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          this.toggleTvMode();
-        }
-      }
-    });
-  }
-
-  private toggleTvMode(): void {
-    const panelKeys = Object.keys(DEFAULT_PANELS).filter(
-      key => this.ctx.panelSettings[key]?.enabled !== false
-    );
-    if (!this.ctx.tvMode) {
-      this.ctx.tvMode = new TvModeController({
-        panelKeys,
-        onPanelChange: () => {
-          document.getElementById('tvModeBtn')?.classList.toggle('active', this.ctx.tvMode?.active ?? false);
-        }
-      });
-    } else {
-      this.ctx.tvMode.updatePanelKeys(panelKeys);
-    }
-    this.ctx.tvMode.toggle();
-    document.getElementById('tvModeBtn')?.classList.toggle('active', this.ctx.tvMode.active);
   }
 
   destroy(): void {
@@ -158,8 +112,6 @@ export class EventHandlerManager implements AppModule {
       clearInterval(this.clockIntervalId);
       this.clockIntervalId = null;
     }
-    this.ctx.tvMode?.destroy();
-    this.ctx.tvMode = null;
     this.ctx.unifiedSettings?.destroy();
     this.ctx.unifiedSettings = null;
   }
@@ -206,21 +158,6 @@ export class EventHandlerManager implements AppModule {
       trackThemeChanged(next);
     });
 
-    const isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    if (this.ctx.isDesktopApp || isLocalDev) {
-      this.ctx.container.querySelectorAll<HTMLAnchorElement>('.variant-option').forEach(link => {
-        link.addEventListener('click', (e) => {
-          const variant = link.dataset.variant;
-          if (variant && variant !== SITE_VARIANT) {
-            e.preventDefault();
-            trackVariantSwitch(SITE_VARIANT, variant);
-            localStorage.setItem('worldmonitor-variant', variant);
-            window.location.reload();
-          }
-        });
-      });
-    }
-
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     if (!this.ctx.isDesktopApp && fullscreenBtn) {
       fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
@@ -256,10 +193,6 @@ export class EventHandlerManager implements AppModule {
       }
     };
     document.addEventListener('visibilitychange', this.boundVisibilityHandler);
-
-    window.addEventListener('focal-points-ready', () => {
-      (this.ctx.panels['cii'] as CIIPanel)?.refresh(true);
-    });
 
     window.addEventListener('theme-changed', () => {
       this.ctx.map?.render();
@@ -414,6 +347,9 @@ export class EventHandlerManager implements AppModule {
   }
 
   setupMobileWarning(): void {
+    // Skip mobile warning for finance variant - it's irrelevant for Gold trading
+    if (SITE_VARIANT === 'finance') return;
+    
     if (MobileWarningModal.shouldShow()) {
       this.ctx.mobileWarningModal = new MobileWarningModal();
       this.ctx.mobileWarningModal.show();
@@ -425,16 +361,6 @@ export class EventHandlerManager implements AppModule {
     const headerLeft = this.ctx.container.querySelector('.header-left');
     if (headerLeft) {
       headerLeft.appendChild(this.ctx.statusPanel.getElement());
-    }
-  }
-
-  setupPizzIntIndicator(): void {
-    if (SITE_VARIANT === 'tech' || SITE_VARIANT === 'finance' || SITE_VARIANT === 'happy') return;
-
-    this.ctx.pizzintIndicator = new PizzIntIndicator();
-    const headerLeft = this.ctx.container.querySelector('.header-left');
-    if (headerLeft) {
-      headerLeft.appendChild(this.ctx.pizzintIndicator.getElement());
     }
   }
 

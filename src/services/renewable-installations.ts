@@ -24,9 +24,8 @@ export interface RenewableInstallation {
 
 /**
  * Load curated renewable energy installations from static JSON.
- * Uses dynamic import for code-splitting (JSON only loaded for happy variant).
+ * Disabled for finance variant - returns empty array.
  */
 export async function fetchRenewableInstallations(): Promise<RenewableInstallation[]> {
-  const { default: data } = await import('@/data/renewable-installations.json');
-  return data as RenewableInstallation[];
+  return [];
 }

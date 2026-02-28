@@ -17,7 +17,6 @@ import { BETA_MODE } from '@/config/beta';
 import { mlWorker } from '@/services/ml-worker';
 import { t } from '@/services/i18n';
 import { trackCountrySelected, trackCountryBriefOpened } from '@/services/analytics';
-import type { StrategicPosturePanel } from '@/components/StrategicPosturePanel';
 
 type IntlDisplayNamesCtor = new (
   locales: string | string[],
@@ -59,8 +58,7 @@ export class CountryIntelManager implements AppModule {
           signalTypes: [...cluster.signalTypes],
           regionalDescriptions: regional.map(r => r.description),
         } : null;
-        const posturePanel = this.ctx.panels['strategic-posture'] as StrategicPosturePanel | undefined;
-        const postures = posturePanel?.getPostures() || [];
+        const postures: never[] = [];
         const data = collectStoryData(code, name, this.ctx.latestClusters, postures, this.ctx.latestPredictions, signals, convergence);
         const canvas = await renderStoryToCanvas(data);
         const dataUrl = canvas.toDataURL('image/png');
@@ -392,8 +390,7 @@ export class CountryIntelManager implements AppModule {
       this.showToast('Data still loading — try again in a moment');
       return;
     }
-    const posturePanel = this.ctx.panels['strategic-posture'] as StrategicPosturePanel | undefined;
-    const postures = posturePanel?.getPostures() || [];
+    const postures: never[] = [];
     const signals = this.getCountrySignals(code, name);
     const cluster = signalAggregator.getCountryClusters().find(c => c.country === code);
     const regional = signalAggregator.getRegionalConvergence().filter(r => r.countries.includes(code));

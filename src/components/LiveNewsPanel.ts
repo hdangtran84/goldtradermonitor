@@ -53,77 +53,32 @@ export interface LiveChannel {
 }
 
 
-// Full variant: World news channels (24/7 live streams)
+// ============================================================================
+// YOUR LIVESTREAMS - Edit this array to add/remove streams
+// ============================================================================
+// To add a new stream:
+//   1. Copy one of the lines below
+//   2. Change the 'id' to something unique (lowercase, no spaces)
+//   3. Change the 'name' to what you want shown in the tab
+//   4. Update 'fallbackVideoId' with the YouTube video ID from your URL
+//      (e.g., https://www.youtube.com/watch?v=XXXXX -> 'XXXXX')
+// ============================================================================
 const FULL_LIVE_CHANNELS: LiveChannel[] = [
-  { id: 'bloomberg', name: 'Bloomberg', handle: '@Bloomberg', fallbackVideoId: 'iEpJwprxDdk' },
-  { id: 'sky', name: 'SkyNews', handle: '@SkyNews', fallbackVideoId: 'YDvsBbKfLPA' },
-  { id: 'euronews', name: 'Euronews', handle: '@euabortnews', fallbackVideoId: 'pykpO5kQJ98' },
-  { id: 'dw', name: 'DW', handle: '@DWNews', fallbackVideoId: 'LuKwFajn37U' },
-  { id: 'cnbc', name: 'CNBC', handle: '@CNBC', fallbackVideoId: '9NyxcX3rhQs' },
-  { id: 'france24', name: 'France24', handle: '@FRANCE24English', fallbackVideoId: 'Ap-UM1O9RBU' },
-  { id: 'alarabiya', name: 'AlArabiya', handle: '@AlArabiya', fallbackVideoId: 'n7eQejkXbnM', useFallbackOnly: true },
-  { id: 'aljazeera', name: 'AlJazeera', handle: '@AlJazeeraEnglish', fallbackVideoId: 'gCNeDWCI0vo', useFallbackOnly: true },
+  { id: 'dtrading-1', name: 'Stream 1', handle: '@DTradingTips', fallbackVideoId: '3H4IVQejlDE', useFallbackOnly: true },
+  { id: 'dtrading-2', name: 'Stream 2', handle: '@DTradingTips', fallbackVideoId: 'XIyocP-yr9E', useFallbackOnly: true },
+  { id: 'dtrading-3', name: 'Stream 3', handle: '@DTradingTips', fallbackVideoId: 'lpKYgJmCPb0', useFallbackOnly: true },
+  // Add more streams here by copying a line above and changing id, name, and fallbackVideoId
 ];
 
-// Tech variant: Tech & business channels
+// Tech variant: Uses same streams as full variant
 const TECH_LIVE_CHANNELS: LiveChannel[] = [
-  { id: 'bloomberg', name: 'Bloomberg', handle: '@Bloomberg', fallbackVideoId: 'iEpJwprxDdk' },
-  { id: 'yahoo', name: 'Yahoo Finance', handle: '@YahooFinance', fallbackVideoId: 'KQp-e_XQnDE' },
-  { id: 'cnbc', name: 'CNBC', handle: '@CNBC', fallbackVideoId: '9NyxcX3rhQs' },
-  { id: 'nasa', name: 'NASA TV', handle: '@NASA', fallbackVideoId: 'fO9e9jnhYK8', useFallbackOnly: true },
+  ...FULL_LIVE_CHANNELS,
 ];
 
-// Optional channels users can add from the "Available Channels" tab UI
-export const OPTIONAL_LIVE_CHANNELS: LiveChannel[] = [
-  // North America
-  { id: 'livenow-fox', name: 'LiveNOW from FOX', handle: '@LiveNOWfromFOX' },
-  { id: 'fox-news', name: 'Fox News', handle: '@FoxNews', fallbackVideoId: 'QaftgYkG-ek', useFallbackOnly: true },
-  { id: 'newsmax', name: 'Newsmax', handle: '@NEWSMAX', fallbackVideoId: 'cZikyozILOY', useFallbackOnly: true },
-  { id: 'abc-news', name: 'ABC News', handle: '@ABCNews' },
-  { id: 'cbs-news', name: 'CBS News', handle: '@CBSNews' },
-  { id: 'nbc-news', name: 'NBC News', handle: '@NBCNews' },
-  // Europe
-  { id: 'welt', name: 'WELT', handle: '@WELTNachrichtensender' },
-  { id: 'rtve', name: 'RTVE 24H', handle: '@RTVENoticias', fallbackVideoId: '7_srED6k0bE' },
-  { id: 'trt-haber', name: 'TRT Haber', handle: '@trthaber' },
-  { id: 'ntv-turkey', name: 'NTV', handle: '@NTV' },
-  { id: 'cnn-turk', name: 'CNN TURK', handle: '@cnnturk' },
-  { id: 'tv-rain', name: 'TV Rain', handle: '@tvrain' },
-  // Latin America & Portuguese
-  { id: 'cnn-brasil', name: 'CNN Brasil', handle: '@CNNbrasil', fallbackVideoId: '1kWRw-DA6Ns' },
-  { id: 'jovem-pan', name: 'Jovem Pan News', handle: '@jovempannews' },
-  { id: 'record-news', name: 'Record News', handle: '@recordnewsoficial' },
-  { id: 'band-jornalismo', name: 'Band Jornalismo', handle: '@BandJornalismo' },
-  { id: 'tn-argentina', name: 'TN (Todo Noticias)', handle: '@todonoticias', fallbackVideoId: 'cb12KmMMDJA' },
-  { id: 'c5n', name: 'C5N', handle: '@c5n', fallbackVideoId: 'NdQSOItOQ5Y' },
-  { id: 'milenio', name: 'MILENIO', handle: '@MILENIO' },
-  { id: 'noticias-caracol', name: 'Noticias Caracol', handle: '@NoticiasCaracol' },
-  { id: 'ntn24', name: 'NTN24', handle: '@NTN24' },
-  { id: 't13', name: 'T13', handle: '@T13' },
-  // Asia
-  { id: 'tbs-news', name: 'TBS NEWS DIG', handle: '@tbsnewsdig', fallbackVideoId: 'ohI356mwBp8' },
-  { id: 'ann-news', name: 'ANN News', handle: '@ANNnewsCH' },
-  { id: 'ntv-news', name: 'NTV News (Japan)', handle: '@ntv_news' },
-  { id: 'cti-news', name: 'CTI News (Taiwan)', handle: '@CtiTv', fallbackVideoId: 'wUPPkSANpyo', useFallbackOnly: true },
-  { id: 'wion', name: 'WION', handle: '@WIONews' },
-  { id: 'vtc-now', name: 'VTC NOW', handle: '@VTCNOW' },
-  { id: 'cna-asia', name: 'CNA (NewsAsia)', handle: '@channelnewsasia' },
-  { id: 'nhk-world', name: 'NHK World Japan', handle: '@NHKWORLDJAPAN' },
-  // Africa
-  { id: 'africanews', name: 'Africanews', handle: '@africanews' },
-  { id: 'channels-tv', name: 'Channels TV', handle: '@channelstv' },
-  { id: 'ktn-news', name: 'KTN News', handle: '@KTNNewsKE' },
-  { id: 'enca', name: 'eNCA', handle: '@enewschannel' },
-  { id: 'sabc-news', name: 'SABC News', handle: '@SABCNews' },
-];
+// Optional channels (empty - add entries here if you want more channels in the UI picker)
+export const OPTIONAL_LIVE_CHANNELS: LiveChannel[] = [];
 
-export const OPTIONAL_CHANNEL_REGIONS: { key: string; labelKey: string; channelIds: string[] }[] = [
-  { key: 'na', labelKey: 'components.liveNews.regionNorthAmerica', channelIds: ['livenow-fox', 'fox-news', 'newsmax', 'abc-news', 'cbs-news', 'nbc-news'] },
-  { key: 'eu', labelKey: 'components.liveNews.regionEurope', channelIds: ['welt', 'rtve', 'trt-haber', 'ntv-turkey', 'cnn-turk', 'tv-rain'] },
-  { key: 'latam', labelKey: 'components.liveNews.regionLatinAmerica', channelIds: ['cnn-brasil', 'jovem-pan', 'record-news', 'band-jornalismo', 'tn-argentina', 'c5n', 'milenio', 'noticias-caracol', 'ntn24', 't13'] },
-  { key: 'asia', labelKey: 'components.liveNews.regionAsia', channelIds: ['tbs-news', 'ann-news', 'ntv-news', 'cti-news', 'wion', 'vtc-now', 'cna-asia', 'nhk-world'] },
-  { key: 'africa', labelKey: 'components.liveNews.regionAfrica', channelIds: ['africanews', 'channels-tv', 'ktn-news', 'enca', 'sabc-news'] },
-];
+export const OPTIONAL_CHANNEL_REGIONS: { key: string; labelKey: string; channelIds: string[] }[] = [];
 
 const DEFAULT_LIVE_CHANNELS = SITE_VARIANT === 'tech' ? TECH_LIVE_CHANNELS : SITE_VARIANT === 'happy' ? [] : FULL_LIVE_CHANNELS;
 

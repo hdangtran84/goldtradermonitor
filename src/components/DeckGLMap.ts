@@ -83,11 +83,12 @@ import {
 } from '@/services/hotspot-escalation';
 import { getCountryScore } from '@/services/country-instability';
 import { getAlertsNearLocation } from '@/services/geo-convergence';
-import type { PositiveGeoEvent } from '@/services/positive-events-geo';
-import type { KindnessPoint } from '@/services/kindness-data';
-import type { HappinessData } from '@/services/happiness-data';
+// Stub types for removed happy variant services
+type PositiveGeoEvent = { lat: number; lon: number; category: string; title?: string; count?: number; name: string };
+type KindnessPoint = { lat: number; lon: number; type: string };
+type HappinessData = { code: string; score: number; scores?: number[]; year?: number; source?: string };
+type SpeciesRecovery = { name: string; recoveryZone?: { name: string; lat: number; lon: number } };
 import type { RenewableInstallation } from '@/services/renewable-installations';
-import type { SpeciesRecovery } from '@/services/conservation-data';
 import { getCountriesGeoJson, getCountryAtCoordinates } from '@/services/country-geometry';
 import type { FeatureCollection, Geometry } from 'geojson';
 
@@ -2269,7 +2270,7 @@ export class DeckGLMap {
     return this.hasRecentNews(now)
       || this.hasRecentRiot(now)
       || this.hotspots.some(h => h.hasBreaking)
-      || this.positiveEvents.some(e => e.count > 10)
+      || this.positiveEvents.some(e => (e.count ?? 0) > 10)
       || this.kindnessPoints.some(p => p.type === 'real');
   }
 
@@ -2416,7 +2417,7 @@ export class DeckGLMap {
     }));
 
     // Gentle pulse ring for significant events (count > 8)
-    const significantEvents = this.positiveEvents.filter(e => e.count > 8);
+    const significantEvents = this.positiveEvents.filter(e => (e.count ?? 0) > 8);
     if (significantEvents.length > 0) {
       const pulse = 1.0 + 0.4 * (0.5 + 0.5 * Math.sin((this.pulseTime || Date.now()) / 800));
       layers.push(new ScatterplotLayer({
@@ -3012,11 +3013,8 @@ export class DeckGLMap {
         { key: 'cloudRegions', label: t('components.deckgl.layers.cloudRegions'), icon: '&#9729;' },
         { key: 'datacenters', label: t('components.deckgl.layers.aiDataCenters'), icon: '&#128421;' },
         { key: 'cables', label: t('components.deckgl.layers.underseaCables'), icon: '&#128268;' },
-        { key: 'outages', label: t('components.deckgl.layers.internetOutages'), icon: '&#128225;' },
         { key: 'cyberThreats', label: t('components.deckgl.layers.cyberThreats'), icon: '&#128737;' },
         { key: 'techEvents', label: t('components.deckgl.layers.techEvents'), icon: '&#128197;' },
-        { key: 'natural', label: t('components.deckgl.layers.naturalEvents'), icon: '&#127755;' },
-        { key: 'fires', label: t('components.deckgl.layers.fires'), icon: '&#128293;' },
       ]
       : SITE_VARIANT === 'finance'
       ? [
@@ -3028,11 +3026,7 @@ export class DeckGLMap {
           { key: 'tradeRoutes', label: t('components.deckgl.layers.tradeRoutes'), icon: '&#128674;' },
           { key: 'cables', label: t('components.deckgl.layers.underseaCables'), icon: '&#128268;' },
           { key: 'pipelines', label: t('components.deckgl.layers.pipelines'), icon: '&#128738;' },
-          { key: 'outages', label: t('components.deckgl.layers.internetOutages'), icon: '&#128225;' },
-          { key: 'weather', label: t('components.deckgl.layers.weatherAlerts'), icon: '&#9928;' },
           { key: 'economic', label: t('components.deckgl.layers.economicCenters'), icon: '&#128176;' },
-          { key: 'waterways', label: t('components.deckgl.layers.strategicWaterways'), icon: '&#9875;' },
-          { key: 'natural', label: t('components.deckgl.layers.naturalEvents'), icon: '&#127755;' },
           { key: 'cyberThreats', label: t('components.deckgl.layers.cyberThreats'), icon: '&#128737;' },
         ]
       : SITE_VARIANT === 'happy'
@@ -3045,28 +3039,16 @@ export class DeckGLMap {
         ]
       : [
         { key: 'hotspots', label: t('components.deckgl.layers.intelHotspots'), icon: '&#127919;' },
-        { key: 'conflicts', label: t('components.deckgl.layers.conflictZones'), icon: '&#9876;' },
-        { key: 'bases', label: t('components.deckgl.layers.militaryBases'), icon: '&#127963;' },
-        { key: 'nuclear', label: t('components.deckgl.layers.nuclearSites'), icon: '&#9762;' },
         { key: 'irradiators', label: t('components.deckgl.layers.gammaIrradiators'), icon: '&#9888;' },
         { key: 'spaceports', label: t('components.deckgl.layers.spaceports'), icon: '&#128640;' },
         { key: 'cables', label: t('components.deckgl.layers.underseaCables'), icon: '&#128268;' },
         { key: 'pipelines', label: t('components.deckgl.layers.pipelines'), icon: '&#128738;' },
         { key: 'datacenters', label: t('components.deckgl.layers.aiDataCenters'), icon: '&#128421;' },
-        { key: 'military', label: t('components.deckgl.layers.militaryActivity'), icon: '&#9992;' },
-        { key: 'ais', label: t('components.deckgl.layers.shipTraffic'), icon: '&#128674;' },
         { key: 'tradeRoutes', label: t('components.deckgl.layers.tradeRoutes'), icon: '&#9875;' },
-        { key: 'flights', label: t('components.deckgl.layers.flightDelays'), icon: '&#9992;' },
-        { key: 'protests', label: t('components.deckgl.layers.protests'), icon: '&#128226;' },
         { key: 'ucdpEvents', label: t('components.deckgl.layers.ucdpEvents'), icon: '&#9876;' },
         { key: 'displacement', label: t('components.deckgl.layers.displacementFlows'), icon: '&#128101;' },
         { key: 'climate', label: t('components.deckgl.layers.climateAnomalies'), icon: '&#127787;' },
-        { key: 'weather', label: t('components.deckgl.layers.weatherAlerts'), icon: '&#9928;' },
-        { key: 'outages', label: t('components.deckgl.layers.internetOutages'), icon: '&#128225;' },
         { key: 'cyberThreats', label: t('components.deckgl.layers.cyberThreats'), icon: '&#128737;' },
-        { key: 'natural', label: t('components.deckgl.layers.naturalEvents'), icon: '&#127755;' },
-        { key: 'fires', label: t('components.deckgl.layers.fires'), icon: '&#128293;' },
-        { key: 'waterways', label: t('components.deckgl.layers.strategicWaterways'), icon: '&#9875;' },
         { key: 'economic', label: t('components.deckgl.layers.economicCenters'), icon: '&#128176;' },
         { key: 'minerals', label: t('components.deckgl.layers.criticalMinerals'), icon: '&#128142;' },
       ];
@@ -3698,9 +3680,12 @@ export class DeckGLMap {
   }
 
   public setHappinessScores(data: HappinessData): void {
-    this.happinessScores = data.scores;
-    this.happinessYear = data.year;
-    this.happinessSource = data.source;
+    // Disabled for finance variant - stub implementation
+    if (data.scores && Array.isArray(data.scores)) {
+      // This would need proper implementation if re-enabled
+    }
+    this.happinessYear = data.year ?? 0;
+    this.happinessSource = data.source ?? '';
     this.render();
   }
 

@@ -330,27 +330,21 @@ export class MapComponent {
 
     // Variant-aware layer buttons
     const fullLayers: (keyof MapLayers)[] = [
-      'conflicts', 'hotspots', 'sanctions', 'protests',  // geopolitical
-      'bases', 'nuclear', 'irradiators',                 // military/strategic
-      'military',                                         // military tracking (flights + vessels)
-      'cables', 'pipelines', 'outages', 'datacenters',   // infrastructure
+      'hotspots', 'sanctions',                           // geopolitical
+      'irradiators',                                      // strategic
+      'cables', 'pipelines', 'datacenters',              // infrastructure
       // cyberThreats is intentionally hidden on SVG/mobile fallback (DeckGL desktop only)
-      'ais', 'flights',                                   // transport
-      'natural', 'weather',                               // natural
       'economic',                                         // economic
-      'waterways',                                        // labels
     ];
     const techLayers: (keyof MapLayers)[] = [
-      'cables', 'datacenters', 'outages',                // tech infrastructure
+      'cables', 'datacenters',                           // tech infrastructure
       'startupHubs', 'cloudRegions', 'accelerators', 'techHQs', 'techEvents', // tech ecosystem
-      'natural', 'weather',                               // natural events
       'economic',                                         // economic/geographic
     ];
     const financeLayers: (keyof MapLayers)[] = [
       'stockExchanges', 'financialCenters', 'centralBanks', 'commodityHubs', // finance ecosystem
-      'cables', 'pipelines', 'outages',                   // infrastructure
-      'sanctions', 'economic', 'waterways',               // geopolitical/economic
-      'natural', 'weather',                               // natural events
+      'cables', 'pipelines',                              // infrastructure
+      'sanctions', 'economic',                            // geopolitical/economic
     ];
     const happyLayers: (keyof MapLayers)[] = [
       'positiveEvents', 'kindness', 'happiness', 'speciesRecovery', 'renewableInstallations',
@@ -358,21 +352,11 @@ export class MapComponent {
     const layers = SITE_VARIANT === 'tech' ? techLayers : SITE_VARIANT === 'finance' ? financeLayers : SITE_VARIANT === 'happy' ? happyLayers : fullLayers;
     const layerLabelKeys: Partial<Record<keyof MapLayers, string>> = {
       hotspots: 'components.deckgl.layers.intelHotspots',
-      conflicts: 'components.deckgl.layers.conflictZones',
-      bases: 'components.deckgl.layers.militaryBases',
-      nuclear: 'components.deckgl.layers.nuclearSites',
       irradiators: 'components.deckgl.layers.gammaIrradiators',
-      military: 'components.deckgl.layers.militaryActivity',
       cables: 'components.deckgl.layers.underseaCables',
       pipelines: 'components.deckgl.layers.pipelines',
-      outages: 'components.deckgl.layers.internetOutages',
       datacenters: 'components.deckgl.layers.aiDataCenters',
-      ais: 'components.deckgl.layers.shipTraffic',
-      flights: 'components.deckgl.layers.flightDelays',
-      natural: 'components.deckgl.layers.naturalEvents',
-      weather: 'components.deckgl.layers.weatherAlerts',
       economic: 'components.deckgl.layers.economicCenters',
-      waterways: 'components.deckgl.layers.strategicWaterways',
       startupHubs: 'components.deckgl.layers.startupHubs',
       cloudRegions: 'components.deckgl.layers.cloudRegions',
       accelerators: 'components.deckgl.layers.accelerators',
