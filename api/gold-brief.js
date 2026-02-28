@@ -69,7 +69,27 @@ export default async function handler(req) {
       console.warn('[gold-brief] Failed to fetch price context:', e.message);
     }
 
-    // Generate brief using Groq Llama
+    // Fetch top breaking news headlines (GDELT)
+    let headlinesText = '';
+    try {
+      const query = 'gold OR XAUUSD OR "gold price" OR Iran OR missile OR attack OR geopolitical';
+      const newsRes = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : ''}/api/gdelt-sentiment?query=${encodeURIComponent(query)}&maxrecords=5`);
+      if (newsRes.ok) {
+        const newsData = await newsRes.json();
+        const articles = newsData.articles || [];
+        const headlines = articles
+          .map(a => a.title)
+          .filter(t => typeof t === 'string' && t.length > 10)
+          .slice(0, 5);
+        if (headlines.length > 0) {
+          headlinesText = `\n\nTop breaking news headlines:\n- ${headlines.join('\n- ')}`;
+        }
+      }
+    } catch (e) {
+      console.warn('[gold-brief] Failed to fetch breaking news headlines:', e.message);
+    }
+
+    // Generate brief using Groq Llama, injecting headlines
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -80,7 +100,7 @@ export default async function handler(req) {
         model: 'llama-3.1-8b-instant',
         messages: [
           { role: 'system', content: GOLD_BRIEF_PROMPT },
-          { role: 'user', content: `${priceContext}\n\nGenerate a gold market brief for ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.` },
+          { role: 'user', content: `${priceContext}${headlinesText}\n\nGenerate a gold market brief for ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.` },
         ],
         max_tokens: 300,
         temperature: 0.7,
