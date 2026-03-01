@@ -2,22 +2,7 @@ import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 
 export const config = { runtime: 'edge' };
 
-function getRelayBaseUrl() {
-  const relayUrl = process.env.WS_RELAY_URL;
-  if (!relayUrl) return null;
-  return relayUrl.replace('wss://', 'https://').replace('ws://', 'http://').replace(/\/$/, '');
-}
-
-function getRelayHeaders(baseHeaders = {}) {
-  const headers = { ...baseHeaders };
-  const relaySecret = process.env.RELAY_SHARED_SECRET || '';
-  if (relaySecret) {
-    const relayHeader = (process.env.RELAY_AUTH_HEADER || 'x-relay-key').toLowerCase();
-    headers[relayHeader] = relaySecret;
-    headers.Authorization = `Bearer ${relaySecret}`;
-  }
-  return headers;
-}
+const GAMMA_BASE = 'https://gamma-api.polymarket.com';
 
 async function fetchWithTimeout(url, options, timeoutMs = 15000) {
   const controller = new AbortController();
@@ -49,40 +34,70 @@ export default async function handler(req) {
     });
   }
 
-  const relayBaseUrl = getRelayBaseUrl();
-  if (!relayBaseUrl) {
-    return new Response(JSON.stringify({ error: 'WS_RELAY_URL is not configured' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
-  }
-
   try {
     const requestUrl = new URL(req.url);
-    const relayUrl = `${relayBaseUrl}/polymarket${requestUrl.search || ''}`;
-    const response = await fetchWithTimeout(relayUrl, {
-      headers: getRelayHeaders({ Accept: 'application/json' }),
+    const endpoint = requestUrl.searchParams.get('endpoint') || 'markets';
+    const closed = requestUrl.searchParams.get('closed') || 'false';
+    const order = requestUrl.searchParams.get('order') || 'volume';
+    const ascending = requestUrl.searchParams.get('ascending') || 'false';
+    const limitParam = parseInt(requestUrl.searchParams.get('limit') || '50', 10);
+    const limit = Math.max(1, Math.min(100, limitParam));
+
+    const params = new URLSearchParams({
+      closed,
+      order,
+      ascending,
+      limit: String(limit),
+    });
+
+    // Add tag filter for events endpoint
+    if (endpoint === 'events') {
+      const tag = (requestUrl.searchParams.get('tag') || '').replace(/[^a-z0-9-]/gi, '').slice(0, 100);
+      if (tag) params.set('tag_slug', tag);
+    }
+
+    const gammaUrl = `${GAMMA_BASE}/${endpoint === 'events' ? 'events' : 'markets'}?${params}`;
+
+    const response = await fetchWithTimeout(gammaUrl, {
+      headers: { 
+        'Accept': 'application/json',
+        'User-Agent': 'GoldTrader/1.0',
+      },
     }, 15000);
 
-    const body = await response.text();
-    const headers = {
-      'Content-Type': response.headers.get('content-type') || 'application/json',
-      'Cache-Control': response.headers.get('cache-control') || 'no-cache',
-      ...corsHeaders,
-    };
+    if (!response.ok) {
+      // Gamma API might be blocking - return empty array gracefully
+      return new Response(JSON.stringify([]), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=300',
+          ...corsHeaders,
+        },
+      });
+    }
 
-    return new Response(body, {
-      status: response.status,
-      headers,
+    const data = await response.text();
+    
+    return new Response(data, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=120',
+        'X-Polymarket-Source': 'gamma',
+        ...corsHeaders,
+      },
     });
   } catch (error) {
     const isTimeout = error?.name === 'AbortError';
-    return new Response(JSON.stringify({
-      error: isTimeout ? 'Relay timeout' : 'Relay request failed',
-      details: error?.message || String(error),
-    }), {
-      status: isTimeout ? 504 : 502,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    // Return empty array on error for graceful degradation
+    return new Response(JSON.stringify([]), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300',
+        ...corsHeaders,
+      },
     });
   }
 }
