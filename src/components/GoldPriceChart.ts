@@ -179,7 +179,7 @@ export class GoldPriceChart {
    */
   private async fetchGlobalSlope(): Promise<void> {
     try {
-      const url = proxyUrl('/api/yahoo/v8/finance/chart/GC=F?interval=1h&range=5d');
+      const url = proxyUrl('/api/yahoo-gold?interval=1h&range=5d');
       const response = await fetch(url);
       if (!response.ok) return;
       
@@ -406,7 +406,7 @@ export class GoldPriceChart {
       const days = daysConfig[this.currentTimeRange];
       
       // CoinGecko API - tether-gold is the ID for XAUT
-      const url = proxyUrl(`/api/coingecko/api/v3/coins/tether-gold/market_chart?vs_currency=usd&days=${days}`);
+      const url = proxyUrl(`/api/coingecko-xaut?days=${days}`);
       
       const response = await fetch(url, { 
         signal: AbortSignal.timeout(10000),
@@ -471,7 +471,7 @@ export class GoldPriceChart {
     const config = rangeConfig[this.currentTimeRange];
 
     // Fetch chart data - using GC=F (COMEX Gold Futures tracks spot price closely)
-    const url = proxyUrl(`/api/yahoo/v8/finance/chart/GC=F?interval=${config.interval}&range=${config.range}`);
+    const url = proxyUrl(`/api/yahoo-gold?interval=${config.interval}&range=${config.range}`);
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -545,7 +545,7 @@ export class GoldPriceChart {
       let data24h: Array<{ timestamp: Date; close: number; high: number; low: number }> = [];
       
       try {
-        const url = proxyUrl(`/api/coingecko/api/v3/coins/tether-gold/market_chart?vs_currency=usd&days=7`);
+        const url = proxyUrl(`/api/coingecko-xaut?days=7`);
         const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
         
         if (response.ok) {
@@ -565,7 +565,7 @@ export class GoldPriceChart {
       
       // Fallback to Yahoo Finance if CoinGecko failed
       if (data24h.length === 0) {
-        const weeklyUrl = proxyUrl(`/api/yahoo/v8/finance/chart/GC=F?interval=1h&range=5d`);
+        const weeklyUrl = proxyUrl(`/api/yahoo-gold?interval=1h&range=5d`);
         const weeklyResponse = await fetch(weeklyUrl);
         
         if (weeklyResponse.ok) {

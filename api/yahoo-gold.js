@@ -1,11 +1,13 @@
-import { getCorsHeaders, isDisallowedOrigin } from '../_cors.js';
+import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 
 export const config = { runtime: 'edge' };
 
 /**
- * GET /api/coingecko/[...path]
- * Proxies CoinGecko API requests for XAUT (Tether Gold) price data.
- * Used by GoldPriceChart for 24/7 gold price tracking.
+ * GET /api/yahoo-gold
+ * Fetches gold futures (GC=F) chart data from Yahoo Finance.
+ * Query params:
+ *   - interval: 1m, 5m, 15m, 30m, 1h, 1d (default: 1h)
+ *   - range: 1d, 5d, 1mo, 3mo, 6mo, 1y (default: 5d)
  */
 export default async function handler(req) {
   const corsHeaders = getCorsHeaders(req, 'GET, OPTIONS');
@@ -30,25 +32,18 @@ export default async function handler(req) {
 
   try {
     const url = new URL(req.url);
-    // Extract the path after /api/coingecko/
-    const pathMatch = url.pathname.match(/^\/api\/coingecko\/(.+)$/);
-    if (!pathMatch) {
-      return new Response(JSON.stringify({ error: 'Invalid path' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
+    const interval = url.searchParams.get('interval') || '1h';
+    const range = url.searchParams.get('range') || '5d';
 
-    const apiPath = pathMatch[1];
-    const coingeckoUrl = `https://api.coingecko.com/${apiPath}${url.search}`;
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=${interval}&range=${range}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(coingeckoUrl, {
+    const response = await fetch(yahooUrl, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'GoldTrader/1.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
       signal: controller.signal,
     });
@@ -59,7 +54,7 @@ export default async function handler(req) {
     return new Response(data, {
       status: response.status,
       headers: {
-        'Content-Type': response.headers.get('content-type') || 'application/json',
+        'Content-Type': 'application/json',
         'Cache-Control': 'public, max-age=60, s-maxage=120',
         ...corsHeaders,
       },
@@ -71,8 +66,8 @@ export default async function handler(req) {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
-    console.error('[coingecko] Error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to fetch from CoinGecko' }), {
+    console.error('[yahoo-gold] Error:', err);
+    return new Response(JSON.stringify({ error: 'Failed to fetch from Yahoo Finance' }), {
       status: 502,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
