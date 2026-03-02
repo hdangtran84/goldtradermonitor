@@ -63,7 +63,6 @@ import { debounce, getCircuitBreakerCooldownInfo } from '@/utils';
 import { isFeatureAvailable } from '@/services/runtime-config';
 import { getAiFlowSettings } from '@/services/ai-flow-settings';
 import { t } from '@/services/i18n';
-import { maybeShowDownloadBanner } from '@/components/DownloadBanner';
 import { mountCommunityWidget } from '@/components/CommunityWidget';
 import { ResearchServiceClient } from '@/generated/client/worldmonitor/research/v1/service_client';
 import {
@@ -499,7 +498,6 @@ export class DataLoaderManager implements AppModule {
 
     this.ctx.allNews = collectedNews;
     this.ctx.initialLoadComplete = true;
-    maybeShowDownloadBanner();
     mountCommunityWidget();
     updateAndCheck([
       { type: 'news', region: 'global', count: collectedNews.length },

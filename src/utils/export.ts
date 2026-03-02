@@ -12,12 +12,12 @@ interface ExportData {
   timestamp: number;
 }
 
-export function exportToJSON(data: ExportData, filename = 'worldmonitor-export'): void {
+export function exportToJSON(data: ExportData, filename = 'goldtrader-export'): void {
   const jsonStr = JSON.stringify(data, null, 2);
   downloadFile(jsonStr, `${filename}.json`, 'application/json');
 }
 
-export function exportToCSV(data: ExportData, filename = 'worldmonitor-export'): void {
+export function exportToCSV(data: ExportData, filename = 'goldtrader-export'): void {
   const lines: string[] = [];
 
   if (data.news && data.news.length > 0) {
