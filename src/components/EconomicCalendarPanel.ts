@@ -42,14 +42,46 @@ export class EconomicCalendarPanel extends Panel {
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private loading = true;
   private error: string | null = null;
+  private weekStart: Date = new Date(); // Monday 00:00 UTC
+  private weekEnd: Date = new Date();   // Friday 23:59 UTC
 
   constructor() {
     super({
       id: 'economic-calendar',
       title: 'Economic Calendar',
       showCount: true,
-      infoTooltip: '<strong>Economic Calendar</strong><br>High-impact USD events affecting Gold:<br>• <strong>PCE/CPI/PPI</strong>: Inflation data<br>• <strong>NFP</strong>: Jobs report (1st Friday)<br>• <strong>FOMC</strong>: Fed rate decisions<br>• <strong>GDP/ISM</strong>: Growth indicators<br><em>Data from FXStreet • All times in UTC</em>',
+      infoTooltip: '<strong>Economic Calendar</strong><br>High-impact USD events affecting Gold (current week only):<br>• <strong>PCE/CPI/PPI</strong>: Inflation data<br>• <strong>NFP</strong>: Jobs report (1st Friday)<br>• <strong>FOMC</strong>: Fed rate decisions<br>• <strong>ISM PMI</strong>: Manufacturing/Services<br><em>Data from FXStreet • All times in UTC</em>',
     });
+    this.updateWeekBoundaries();
+  }
+
+  /** Calculate current week boundaries (Monday 00:00 UTC to Friday 23:59 UTC) */
+  private updateWeekBoundaries(): void {
+    const now = new Date();
+    const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    
+    // Calculate Monday of current week
+    // If today is Sunday (0), go back 6 days; if Monday (1), go back 0 days, etc.
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    this.weekStart = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() - daysToMonday,
+      0, 0, 0, 0
+    ));
+    
+    // Friday is 4 days after Monday
+    this.weekEnd = new Date(Date.UTC(
+      this.weekStart.getUTCFullYear(),
+      this.weekStart.getUTCMonth(),
+      this.weekStart.getUTCDate() + 4,
+      23, 59, 59, 999
+    ));
+  }
+
+  /** Check if a date falls within the current week (Mon-Fri UTC) */
+  private isInCurrentWeek(date: Date): boolean {
+    return date >= this.weekStart && date <= this.weekEnd;
   }
 
   async init(): Promise<void> {
@@ -63,6 +95,8 @@ export class EconomicCalendarPanel extends Panel {
       clearInterval(this.refreshInterval);
     }
     this.refreshInterval = setInterval(() => {
+      // Update week boundaries in case week changed
+      this.updateWeekBoundaries();
       this.fetchEvents();
     }, REFRESH_INTERVAL_MS);
   }
@@ -70,6 +104,7 @@ export class EconomicCalendarPanel extends Panel {
   private async fetchEvents(): Promise<void> {
     this.loading = true;
     this.error = null;
+    this.updateWeekBoundaries(); // Ensure week boundaries are current
     this.renderContent();
 
     try {
@@ -101,7 +136,6 @@ export class EconomicCalendarPanel extends Panel {
         this.events = this.getMockEvents();
       } else {
         // Events already filtered by API (USD HIGH impact) - just transform to our format
-        const now = new Date();
         this.events = rawEvents
           .map((e: {
             id?: string;
@@ -133,20 +167,20 @@ export class EconomicCalendarPanel extends Panel {
             previous: e.previous != null ? String(e.previous) + (e.unit || '') : undefined,
             goldEffect: e.goldEffect?.direction || this.getGoldEffect(e.name || ''),
           }))
+          // Filter: only high-impact events in current week (Mon-Fri UTC)
+          .filter((e: EconomicEvent) => 
+            e.impact === 'high' && this.isInCurrentWeek(e.time)
+          )
+          // Sort by time (chronological)
           .sort((a: EconomicEvent, b: EconomicEvent) => {
-            const aIsPast = a.time < now;
-            const bIsPast = b.time < now;
-            if (aIsPast && !bIsPast) return 1;
-            if (!aIsPast && bIsPast) return -1;
-            if (aIsPast && bIsPast) return b.time.getTime() - a.time.getTime();
             return a.time.getTime() - b.time.getTime();
           });
         
         if (this.events.length === 0) {
-          console.warn('[EconomicCalendarPanel] No high-impact USD events found, using mock data');
+          console.warn('[EconomicCalendarPanel] No high-impact USD events in current week, using mock data');
           this.events = this.getMockEvents();
         } else {
-          console.log(`[EconomicCalendarPanel] Loaded ${this.events.length} high-impact USD events from FXStreet`);
+          console.log(`[EconomicCalendarPanel] Loaded ${this.events.length} high-impact USD events for week of ${this.formatWeekRange()}`);
         }
       }
     } catch (err) {
@@ -155,8 +189,18 @@ export class EconomicCalendarPanel extends Panel {
     }
 
     this.loading = false;
-    this.setCount(this.events.filter(e => e.impact === 'high').length);
+    this.setCount(this.events.length);
     this.renderContent();
+  }
+
+  /** Format week range as "Mar 03 - Mar 07" */
+  private formatWeekRange(): string {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const startMonth = months[this.weekStart.getUTCMonth()];
+    const startDay = this.weekStart.getUTCDate().toString().padStart(2, '0');
+    const endMonth = months[this.weekEnd.getUTCMonth()];
+    const endDay = this.weekEnd.getUTCDate().toString().padStart(2, '0');
+    return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
   }
 
   private mapVolatility(volatility?: string): 'high' | 'medium' | 'low' {
@@ -215,60 +259,64 @@ export class EconomicCalendarPanel extends Panel {
   }
 
   private getMockEvents(): EconomicEvent[] {
-    // Dynamically generated mock events based on typical US economic calendar patterns
-    // Events are positioned relative to the current date to appear realistic
+    // Generate mock events for current week only (Mon-Fri UTC)
+    // These are positioned realistically within the current week
     
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    const dayOfMonth = today.getDate();
     
-    // Helper to create date at specific UTC time
-    const atTimeUTC = (daysOffset: number, hour: number, minute: number = 0): Date => {
-      const d = new Date(today);
-      d.setDate(d.getDate() + daysOffset);
+    // Helper to create date at specific UTC time on a specific weekday this week
+    // weekdayOffset: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri
+    const atWeekdayUTC = (weekdayOffset: number, hour: number, minute: number = 0): Date => {
+      const d = new Date(this.weekStart);
+      d.setUTCDate(d.getUTCDate() + weekdayOffset);
       d.setUTCHours(hour, minute, 0, 0);
       return d;
     };
     
-    // Calculate days until first Friday of month (NFP day)
-    const getFirstFridayOffset = (): number => {
-      const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      let firstFriday = new Date(firstOfMonth);
-      firstFriday.setDate(1 + ((5 - firstOfMonth.getDay() + 7) % 7));
-      const diff = Math.ceil((firstFriday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      // If first Friday passed, calculate next month's first Friday
-      if (diff < -1) {
-        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-        firstFriday = new Date(nextMonth);
-        firstFriday.setDate(1 + ((5 - nextMonth.getDay() + 7) % 7));
-        return Math.ceil((firstFriday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      }
-      return diff;
-    };
-    
-    const nfpOffset = getFirstFridayOffset();
-    
-    // Realistic upcoming events based on typical US economic calendar
+    // Define events that typically occur during any given week
+    // All times are in UTC (US Eastern releases at 8:30 AM ET = 13:30 UTC)
     const mockEvents: EconomicEvent[] = [
-      // ISM Manufacturing PMI - 1st business day of month at 10:00 EST (15:00 UTC)
+      // Monday - ISM Manufacturing PMI (1st business day of month) at 15:00 UTC (10:00 ET)
       {
         id: 'ism-mfg',
         name: 'ISM Manufacturing PMI',
-        time: dayOfMonth <= 3 ? atTimeUTC(0, 15, 0) : atTimeUTC(-dayOfMonth + 1, 15, 0), // If early in month, today; else mark as released
+        time: atWeekdayUTC(0, 15, 0), // Monday 15:00 UTC
         country: 'US',
         currency: 'USD',
         impact: 'high',
-        actual: dayOfMonth <= 3 ? undefined : '50.3',
         forecast: '49.5',
         previous: '50.9',
         goldEffect: 'Below 50 = contraction → Safe haven Gold bid',
       },
-      // ISM Services PMI - 3rd business day of month at 10:00 EST (15:00 UTC)
+      // Tuesday - JOLTS Job Openings at 15:00 UTC
+      {
+        id: 'jolts',
+        name: 'JOLTS Job Openings',
+        time: atWeekdayUTC(1, 15, 0), // Tuesday 15:00 UTC
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '7.60M',
+        previous: '7.74M',
+        goldEffect: 'Weak job openings → Labor softening → Gold up',
+      },
+      // Wednesday - ADP Nonfarm Employment at 13:15 UTC
+      {
+        id: 'adp',
+        name: 'ADP Nonfarm Employment Change',
+        time: atWeekdayUTC(2, 13, 15), // Wednesday 13:15 UTC
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '150K',
+        previous: '183K',
+        goldEffect: 'ADP preview for NFP → Weak = Gold supportive',
+      },
+      // Wednesday - ISM Services PMI at 15:00 UTC
       {
         id: 'ism-svc',
         name: 'ISM Services PMI',
-        time: atTimeUTC(dayOfMonth <= 3 ? 2 : -(dayOfMonth - 3), 15, 0),
+        time: atWeekdayUTC(2, 15, 0), // Wednesday 15:00 UTC
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -276,11 +324,23 @@ export class EconomicCalendarPanel extends Panel {
         previous: '52.8',
         goldEffect: 'Services sector health affects rate expectations',
       },
-      // Nonfarm Payrolls - 1st Friday of month at 8:30 EST (13:30 UTC)
+      // Thursday - Initial Jobless Claims at 13:30 UTC
+      {
+        id: 'jobless',
+        name: 'Initial Jobless Claims',
+        time: atWeekdayUTC(3, 13, 30), // Thursday 13:30 UTC
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '220K',
+        previous: '242K',
+        goldEffect: 'Higher claims → Weak labor → Gold supportive',
+      },
+      // Friday - Nonfarm Payrolls at 13:30 UTC (1st Friday of month)
       {
         id: 'nfp',
         name: 'Nonfarm Payrolls',
-        time: atTimeUTC(nfpOffset, 13, 30),
+        time: atWeekdayUTC(4, 13, 30), // Friday 13:30 UTC
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -288,11 +348,11 @@ export class EconomicCalendarPanel extends Panel {
         previous: '143K',
         goldEffect: 'Strong NFP → USD rally → Gold sell-off',
       },
-      // Unemployment Rate - same time as NFP
+      // Friday - Unemployment Rate at 13:30 UTC
       {
-        id: 'unemp-rate',
+        id: 'unemp',
         name: 'Unemployment Rate',
-        time: atTimeUTC(nfpOffset, 13, 30),
+        time: atWeekdayUTC(4, 13, 30), // Friday 13:30 UTC
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -300,119 +360,28 @@ export class EconomicCalendarPanel extends Panel {
         previous: '4.0%',
         goldEffect: 'Rising unemployment → Fed dovish → Gold up',
       },
-      // Average Hourly Earnings - same time as NFP
+      // Friday - Average Hourly Earnings at 13:30 UTC
       {
         id: 'avg-earnings',
         name: 'Average Hourly Earnings m/m',
-        time: atTimeUTC(nfpOffset, 13, 30),
+        time: atWeekdayUTC(4, 13, 30), // Friday 13:30 UTC
         country: 'US',
         currency: 'USD',
         impact: 'high',
         forecast: '0.3%',
         previous: '0.5%',
-        goldEffect: 'Wage inflation signals → Fed tightening risk',
-      },
-      // CPI - typically mid-month (around 12th-14th) at 8:30 EST (13:30 UTC)
-      {
-        id: 'cpi',
-        name: 'CPI m/m',
-        time: atTimeUTC(dayOfMonth < 12 ? 12 - dayOfMonth : 30 + 12 - dayOfMonth, 13, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        forecast: '0.2%',
-        previous: '0.3%',
-        goldEffect: 'Higher CPI → Inflation fears → Gold bullish',
-      },
-      // Core CPI - same time as CPI
-      {
-        id: 'core-cpi',
-        name: 'Core CPI m/m',
-        time: atTimeUTC(dayOfMonth < 12 ? 12 - dayOfMonth : 30 + 12 - dayOfMonth, 13, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        forecast: '0.3%',
-        previous: '0.3%',
-        goldEffect: 'Core inflation drives Fed policy decisions',
-      },
-      // Retail Sales - typically around 15th-17th of month
-      {
-        id: 'retail-sales',
-        name: 'Retail Sales m/m',
-        time: atTimeUTC(dayOfMonth < 15 ? 15 - dayOfMonth : 30 + 15 - dayOfMonth, 13, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        forecast: '0.3%',
-        previous: '-0.9%',
-        goldEffect: 'Strong retail → Consumer strength → Fed hawkish',
-      },
-      // PCE - typically last Friday of month at 8:30 EST (13:30 UTC)
-      {
-        id: 'pce',
-        name: 'PCE Price Index m/m',
-        time: atTimeUTC(dayOfMonth > 25 ? 0 : -(dayOfMonth - 28 + 7), 13, 30), // Roughly last week of month
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        actual: dayOfMonth > 25 ? undefined : '0.3%',
-        forecast: '0.3%',
-        previous: '0.3%',
-        goldEffect: "Fed's preferred inflation gauge - key for Gold",
-      },
-      // Core PCE
-      {
-        id: 'core-pce',
-        name: 'Core PCE Price Index m/m',
-        time: atTimeUTC(dayOfMonth > 25 ? 0 : -(dayOfMonth - 28 + 7), 13, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        actual: dayOfMonth > 25 ? undefined : '0.4%',
-        forecast: '0.3%',
-        previous: '0.2%',
-        goldEffect: 'Hot Core PCE → Hawkish Fed → Gold pressure',
-      },
-      // FOMC - typically 3rd week of alternate months
-      {
-        id: 'fomc',
-        name: 'FOMC Interest Rate Decision',
-        time: atTimeUTC(21 - dayOfMonth > 0 ? 21 - dayOfMonth : 30 + 21 - dayOfMonth, 19, 0),
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        forecast: '4.50%',
-        previous: '4.50%',
-        goldEffect: 'Rate unchanged → Focus on dot plot guidance',
-      },
-      // Initial Jobless Claims - every Thursday at 8:30 EST (13:30 UTC)
-      {
-        id: 'jobless-claims',
-        name: 'Initial Jobless Claims',
-        time: atTimeUTC((4 - dayOfWeek + 7) % 7, 13, 30), // Next Thursday
-        country: 'US',
-        currency: 'USD',
-        impact: 'medium',
-        forecast: '220K',
-        previous: '242K',
-        goldEffect: 'Higher claims → Weak labor → Gold supportive',
+        goldEffect: 'Wage inflation → Fed tightening risk',
       },
     ];
 
-    // Sort: upcoming events first, released at bottom
-    return mockEvents.sort((a, b) => {
-      const aIsPast = a.time < now;
-      const bIsPast = b.time < now;
-      // Past events go to bottom
-      if (aIsPast && !bIsPast) return 1;
-      if (!aIsPast && bIsPast) return -1;
-      // Within same group, sort by time (ascending for upcoming, descending for past)
-      if (aIsPast && bIsPast) {
-        return b.time.getTime() - a.time.getTime(); // Most recent released first
-      }
-      return a.time.getTime() - b.time.getTime(); // Soonest upcoming first
-    });
+    // Mark events as "released" if their time has passed, add actual values
+    return mockEvents
+      .filter(e => this.isInCurrentWeek(e.time)) // Only current week events
+      .map(e => ({
+        ...e,
+        actual: e.time < now ? (e.forecast || '—') : undefined, // Mock actual = forecast for past events
+      }))
+      .sort((a, b) => a.time.getTime() - b.time.getTime()); // Chronological order
   }
 
   private renderContent(): void {
@@ -440,7 +409,7 @@ export class EconomicCalendarPanel extends Panel {
     if (this.events.length === 0) {
       this.setContent(`
         <div class="economic-calendar-empty">
-          <span>No upcoming high-impact events</span>
+          <span>No high-impact events this week (${this.formatWeekRange()})</span>
         </div>
       `);
       return;
@@ -450,13 +419,15 @@ export class EconomicCalendarPanel extends Panel {
     const eventCards = this.events.map(event => this.renderEventCard(event, now)).join('');
 
     this.setContent(`
+      <div class="economic-calendar-header">
+        <span class="week-range">Week: ${this.formatWeekRange()}</span>
+      </div>
       <div class="economic-calendar-list">
         ${eventCards}
       </div>
       <div class="economic-calendar-footer">
         <span class="calendar-legend">
           <span class="impact-dot high"></span> High Impact
-          <span class="impact-dot medium"></span> Medium
         </span>
         <span class="last-updated">Updated: ${this.formatTimeUTC(now)}</span>
       </div>
@@ -468,20 +439,11 @@ export class EconomicCalendarPanel extends Panel {
 
   private renderEventCard(event: EconomicEvent, now: Date): string {
     const isPast = event.time < now;
-    const isToday = this.isSameUTCDay(event.time, now);
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const isTomorrow = this.isSameUTCDay(event.time, tomorrow);
 
-    let timeDisplay: string;
-    if (isPast) {
-      timeDisplay = 'Released';
-    } else if (isToday) {
-      timeDisplay = `Today ${this.formatTimeUTC(event.time)}`;
-    } else if (isTomorrow) {
-      timeDisplay = `Tomorrow ${this.formatTimeUTC(event.time)}`;
-    } else {
-      timeDisplay = this.formatDateTimeUTC(event.time);
-    }
+    // Always show full UTC date/time format: "Mon, Mar 03 13:30 UTC"
+    const timeDisplay = isPast 
+      ? `${this.formatDateTimeUTC(event.time)} ✓`
+      : this.formatDateTimeUTC(event.time);
 
     const impactClass = event.impact;
     const pastClass = isPast ? 'past' : '';
@@ -542,13 +504,6 @@ export class EconomicCalendarPanel extends Panel {
     const hours = date.getUTCHours().toString().padStart(2, '0');
     const minutes = date.getUTCMinutes().toString().padStart(2, '0');
     return `${day}, ${month} ${dateNum} ${hours}:${minutes} UTC`;
-  }
-
-  /** Check if two dates are the same day in UTC */
-  private isSameUTCDay(date1: Date, date2: Date): boolean {
-    return date1.getUTCFullYear() === date2.getUTCFullYear() &&
-           date1.getUTCMonth() === date2.getUTCMonth() &&
-           date1.getUTCDate() === date2.getUTCDate();
   }
 
   destroy(): void {
