@@ -625,8 +625,8 @@ export const MONITOR_COLORS = [
 ];
 
 export const STORAGE_KEYS = {
-  panels: 'worldmonitor-panels',
-  monitors: 'worldmonitor-monitors',
-  mapLayers: 'worldmonitor-layers',
-  disabledFeeds: 'worldmonitor-disabled-feeds',
+  panels: 'goldtrader-panels',
+  monitors: 'goldtrader-monitors',
+  mapLayers: 'goldtrader-layers',
+  disabledFeeds: 'goldtrader-disabled-feeds',
 } as const;

@@ -796,9 +796,10 @@ export class GoldPriceChart {
       trendBadge.className = `stat-value trend-badge ${this.state.trend}`;
     }
 
-    // Update last updated timestamp
+    // Update last updated timestamp (UTC for consistency)
     if (this.lastUpdatedDisplay && this.state.lastUpdated) {
-      this.lastUpdatedDisplay.textContent = `Updated: ${this.state.lastUpdated.toLocaleTimeString()}`;
+      const utcTime = this.state.lastUpdated.toISOString().slice(11, 16);
+      this.lastUpdatedDisplay.textContent = `Updated: ${utcTime} UTC`;
     }
   }
 
@@ -998,12 +999,12 @@ export class GoldPriceChart {
         .text('--- Predicted Trend');
     }
 
-    // X Axis
+    // X Axis (UTC times for consistency)
     const xAxis = d3.axisBottom(xScale).ticks(this.currentTimeRange === '1h' ? 6 : 8).tickFormat((d) => {
       const date = d as Date;
-      return this.currentTimeRange === '1h'
-        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const hours = date.getUTCHours().toString().padStart(2, '0');
+      const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
     });
 
     g.append('g')
@@ -1112,11 +1113,13 @@ export class GoldPriceChart {
 
       tooltip.select('.tooltip-price').attr('x', 8).attr('y', 16).text(`$${d.close.toFixed(2)}`);
 
+      const hours = d.timestamp.getUTCHours().toString().padStart(2, '0');
+      const minutes = d.timestamp.getUTCMinutes().toString().padStart(2, '0');
       tooltip
         .select('.tooltip-time')
         .attr('x', 8)
         .attr('y', 30)
-        .text(d.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        .text(`${hours}:${minutes} UTC`);
 
       tooltip.select('.tooltip-bg').attr('width', 90).attr('height', 40);
     });

@@ -190,7 +190,7 @@ export class ExportPanel {
   private export(format: ExportFormat): void {
     const data = this.getData();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `worldmonitor-${timestamp}`;
+    const filename = `goldtrader-${timestamp}`;
 
     if (format === 'json') {
       exportToJSON(data, filename);

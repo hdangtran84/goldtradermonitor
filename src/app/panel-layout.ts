@@ -76,7 +76,7 @@ export class PanelLayoutManager implements AppModule {
               <span class="variant-label">GOLD</span>
             </span>
           </div>
-          <span class="logo">Daily Trading Tips</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
+          <span class="logo">Daily Trading Tips — Gold Dashboard</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
           <div class="status-indicator">
             <span class="status-dot"></span>
             <span>${t('header.live')}</span>

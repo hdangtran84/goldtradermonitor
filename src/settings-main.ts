@@ -84,17 +84,17 @@ async function initSettingsWindow(): Promise<void> {
 
   const llmMount = document.getElementById('llmApp');
   const apiMount = document.getElementById('apiKeysApp');
-  const wmMount = document.getElementById('worldmonitorApp');
+  const wmMount = document.getElementById('goldtraderApp');
   if (!llmMount || !apiMount) return;
 
-  // Mount WorldMonitor tab immediately — it doesn't depend on secrets
+  // Mount Gold Trader tab immediately — it doesn't depend on secrets
   const wmTab = new WorldMonitorTab();
   if (wmMount) {
     wmMount.innerHTML = '';
     wmMount.appendChild(wmTab.getElement());
   }
 
-  // Load secrets then refresh WorldMonitor tab to reflect actual key status
+  // Load secrets then refresh Gold Trader tab to reflect actual key status
   await loadDesktopSecrets();
   wmTab.refresh();
 

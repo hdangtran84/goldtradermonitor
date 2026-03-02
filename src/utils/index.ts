@@ -19,6 +19,28 @@ export function formatTime(date: Date): string {
   }
 }
 
+/**
+ * Format a date as UTC time string (HH:MM UTC)
+ */
+export function formatTimeUTC(date: Date): string {
+  const hours = date.getUTCHours().toString().padStart(2, '0');
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes} UTC`;
+}
+
+/**
+ * Format a date as full UTC datetime string (MMM DD, YYYY HH:MM UTC)
+ */
+export function formatDateTimeUTC(date: Date): string {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[date.getUTCMonth()];
+  const day = date.getUTCDate();
+  const year = date.getUTCFullYear();
+  const hours = date.getUTCHours().toString().padStart(2, '0');
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+  return `${month} ${day}, ${year} ${hours}:${minutes} UTC`;
+}
+
 export function formatPrice(price: number): string {
   if (price >= 1000) {
     return `$${price.toLocaleString(undefined, {
