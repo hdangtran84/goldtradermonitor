@@ -1,4 +1,4 @@
-// Dynamic Meta Tags Service for Gold Trader
+// Dynamic Meta Tags Service for Daily Trading Tips - Gold Dashboard
 // Updates OG tags and Twitter Cards for shared stories
 
 interface StoryMeta {
@@ -10,14 +10,14 @@ interface StoryMeta {
   type: 'ciianalysis' | 'crisisalert' | 'dailybrief' | 'marketfocus';
 }
 
-const BASE_URL = 'https://goldtrader.app';
-const DEFAULT_IMAGE = 'https://goldtrader.app/favico/og-image.png';
+const BASE_URL = 'https://goldtradermonitor.vercel.app';
+const DEFAULT_IMAGE = 'https://goldtradermonitor.vercel.app/favico/og-image.png';
 
 export function updateMetaTagsForStory(meta: StoryMeta): void {
   const { countryCode, countryName, ciiScore, ciiLevel, trend, type } = meta;
   
   // Generate dynamic content
-  const title = `${countryName} Intelligence Brief | Gold Trader`;
+  const title = `${countryName} Intelligence Brief | Daily Trading Tips`;
   const description = generateDescription(ciiScore, ciiLevel, trend, type, countryName);
   const storyUrl = `${BASE_URL}/api/story?c=${countryCode}&t=${type}`;
   let imageUrl = `${BASE_URL}/api/og-story?c=${countryCode}&t=${type}`;
@@ -48,8 +48,8 @@ export function updateMetaTagsForStory(meta: StoryMeta): void {
 }
 
 export function resetMetaTags(): void {
-  const defaultTitle = 'Gold Trader - Live Gold Trading Dashboard';
-  const defaultDesc = 'AI-powered real-time gold trading dashboard with live prices, market analysis, and economic indicators.';
+  const defaultTitle = 'Daily Trading Tips - Gold Dashboard';
+  const defaultDesc = 'Realtime Gold (XAU/USD) price chart, AI brief, economic indicators, news, and prediction markets for Gold trading. Live 24/7 by @dtradingtips.';
   
   setMetaTag('title', defaultTitle);
   setMetaTag('description', defaultDesc);
