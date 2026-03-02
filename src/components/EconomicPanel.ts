@@ -90,7 +90,7 @@ export class EconomicPanel extends Panel {
     }
 
     const updateTime = this.lastUpdate
-      ? this.lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      ? this.formatTimeUTC(this.lastUpdate)
       : '';
 
     this.setContent(`
@@ -216,5 +216,12 @@ export class EconomicPanel extends Panel {
     }).join('')}
       </div>
     `;
+  }
+
+  /** Format time as HH:MM UTC */
+  private formatTimeUTC(date: Date): string {
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes} UTC`;
   }
 }

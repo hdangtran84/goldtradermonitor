@@ -411,11 +411,12 @@ export class CountryBriefPage {
 
     this.currentBrief = data.brief;
     const formatted = this.formatBrief(data.brief, this.currentHeadlineCount);
+    const timestampUTC = data.generatedAt ? this.formatTimeUTC(new Date(data.generatedAt)) : '';
     section.innerHTML = `
       <div class="cb-brief-text">${formatted}</div>
       <div class="cb-brief-footer">
         ${data.cached ? `<span class="intel-cached">📋 ${t('modals.countryBrief.cached')}</span>` : `<span class="intel-fresh">✨ ${t('modals.countryBrief.fresh')}</span>`}
-        <span class="intel-timestamp">${data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString() : ''}</span>
+        <span class="intel-timestamp">${timestampUTC}</span>
       </div>`;
   }
 
@@ -674,5 +675,12 @@ export class CountryBriefPage {
 
   public isVisible(): boolean {
     return this.overlay.classList.contains('active');
+  }
+
+  /** Format time as HH:MM UTC */
+  private formatTimeUTC(date: Date): string {
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes} UTC`;
   }
 }

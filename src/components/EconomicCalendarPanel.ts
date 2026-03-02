@@ -48,7 +48,7 @@ export class EconomicCalendarPanel extends Panel {
       id: 'economic-calendar',
       title: 'Economic Calendar',
       showCount: true,
-      infoTooltip: '<strong>Economic Calendar</strong><br>High-impact USD events affecting Gold:<br>• <strong>PCE/CPI/PPI</strong>: Inflation data<br>• <strong>NFP</strong>: Jobs report (1st Friday)<br>• <strong>FOMC</strong>: Fed rate decisions<br>• <strong>GDP/ISM</strong>: Growth indicators<br><em>Data from FXStreet • Times in local timezone</em>',
+      infoTooltip: '<strong>Economic Calendar</strong><br>High-impact USD events affecting Gold:<br>• <strong>PCE/CPI/PPI</strong>: Inflation data<br>• <strong>NFP</strong>: Jobs report (1st Friday)<br>• <strong>FOMC</strong>: Fed rate decisions<br>• <strong>GDP/ISM</strong>: Growth indicators<br><em>Data from FXStreet • All times in UTC</em>',
     });
   }
 
@@ -411,7 +411,7 @@ export class EconomicCalendarPanel extends Panel {
           <span class="impact-dot high"></span> High Impact
           <span class="impact-dot medium"></span> Medium
         </span>
-        <span class="last-updated">Updated: ${now.toLocaleTimeString()}</span>
+        <span class="last-updated">Updated: ${this.formatTimeUTC(now)}</span>
       </div>
     `);
 
@@ -421,19 +421,19 @@ export class EconomicCalendarPanel extends Panel {
 
   private renderEventCard(event: EconomicEvent, now: Date): string {
     const isPast = event.time < now;
-    const isToday = event.time.toDateString() === now.toDateString();
-    const isTomorrow = event.time.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString();
+    const isToday = this.isSameUTCDay(event.time, now);
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const isTomorrow = this.isSameUTCDay(event.time, tomorrow);
 
     let timeDisplay: string;
     if (isPast) {
       timeDisplay = 'Released';
     } else if (isToday) {
-      timeDisplay = `Today ${event.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      timeDisplay = `Today ${this.formatTimeUTC(event.time)}`;
     } else if (isTomorrow) {
-      timeDisplay = `Tomorrow ${event.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      timeDisplay = `Tomorrow ${this.formatTimeUTC(event.time)}`;
     } else {
-      timeDisplay = event.time.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + 
-                    ' ' + event.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      timeDisplay = this.formatDateTimeUTC(event.time);
     }
 
     const impactClass = event.impact;
@@ -476,6 +476,32 @@ export class EconomicCalendarPanel extends Panel {
       'CA': '🇨🇦',
     };
     return flags[country] || '🌐';
+  }
+
+  /** Format time as HH:MM UTC */
+  private formatTimeUTC(date: Date): string {
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes} UTC`;
+  }
+
+  /** Format date+time as "Mon, Mar 03 13:30 UTC" */
+  private formatDateTimeUTC(date: Date): string {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const day = days[date.getUTCDay()];
+    const month = months[date.getUTCMonth()];
+    const dateNum = date.getUTCDate().toString().padStart(2, '0');
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${day}, ${month} ${dateNum} ${hours}:${minutes} UTC`;
+  }
+
+  /** Check if two dates are the same day in UTC */
+  private isSameUTCDay(date1: Date, date2: Date): boolean {
+    return date1.getUTCFullYear() === date2.getUTCFullYear() &&
+           date1.getUTCMonth() === date2.getUTCMonth() &&
+           date1.getUTCDate() === date2.getUTCDate();
   }
 
   destroy(): void {
