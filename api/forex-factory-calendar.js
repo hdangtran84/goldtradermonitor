@@ -164,7 +164,7 @@ export default async function handler(request) {
       headers: {
         ...getCorsHeaders(request),
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        'Cache-Control': 'public, max-age=60', // Cache for 1 minute only for fresher data
       },
     });
   } catch (error) {

@@ -73,30 +73,36 @@ export class EconomicCalendarPanel extends Panel {
     this.renderContent();
 
     try {
-      // Fetch from FXStreet calendar API
-      const response = await fetch('/api/forex-factory-calendar');
+      // Fetch from FXStreet calendar API with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch('/api/forex-factory-calendar', { signal: controller.signal });
+      clearTimeout(timeout);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('[EconomicCalendarPanel] API response:', data);
       
       // Handle both response formats:
       // - Vercel API: { events: [...] }
       // - Direct FXStreet proxy: array of events
       let rawEvents = Array.isArray(data) ? data : (data.events || []);
       
-      if (rawEvents.length === 0) {
+      // Check for API error response
+      if (data.error || data.fallback) {
+        console.warn('[EconomicCalendarPanel] FXStreet API error:', data.error);
+        this.events = this.getMockEvents();
+      } else if (rawEvents.length === 0) {
         console.warn('[EconomicCalendarPanel] FXStreet API returned no events, using mock data');
         this.events = this.getMockEvents();
       } else {
-        // Filter for USD HIGH impact events and transform to our format
+        // Events already filtered by API (USD HIGH impact) - just transform to our format
         const now = new Date();
         this.events = rawEvents
-          .filter((e: { currencyCode?: string; volatility?: string }) => 
-            e.currencyCode === 'USD' && e.volatility === 'HIGH'
-          )
           .map((e: {
             id?: string;
             eventId?: string;
@@ -121,7 +127,7 @@ export class EconomicCalendarPanel extends Panel {
             time: new Date(e.dateUtc || e.time || Date.now()),
             country: e.countryCode || e.country || 'US',
             currency: e.currencyCode || e.currency || 'USD',
-            impact: this.mapVolatility(e.volatility) || e.impact || 'medium',
+            impact: this.mapVolatility(e.volatility) || e.impact || 'high',
             actual: e.actual != null ? String(e.actual) + (e.unit || '') : undefined,
             forecast: e.consensus != null ? String(e.consensus) + (e.unit || '') : e.forecast,
             previous: e.previous != null ? String(e.previous) + (e.unit || '') : undefined,
@@ -209,109 +215,84 @@ export class EconomicCalendarPanel extends Panel {
   }
 
   private getMockEvents(): EconomicEvent[] {
-    // Curated high-impact USD events (Finnhub Economic Calendar requires paid plan)
-    // These follow typical US economic release schedule patterns
-    // Update dates periodically or integrate paid API for real-time data
+    // Dynamically generated mock events based on typical US economic calendar patterns
+    // Events are positioned relative to the current date to appear realistic
     
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const dayOfMonth = today.getDate();
     
-    // Helper to create date at specific time
-    const atTime = (daysOffset: number, hour: number, minute: number = 0): Date => {
+    // Helper to create date at specific UTC time
+    const atTimeUTC = (daysOffset: number, hour: number, minute: number = 0): Date => {
       const d = new Date(today);
       d.setDate(d.getDate() + daysOffset);
-      d.setHours(hour, minute, 0, 0);
+      d.setUTCHours(hour, minute, 0, 0);
       return d;
     };
     
+    // Calculate days until first Friday of month (NFP day)
+    const getFirstFridayOffset = (): number => {
+      const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      let firstFriday = new Date(firstOfMonth);
+      firstFriday.setDate(1 + ((5 - firstOfMonth.getDay() + 7) % 7));
+      const diff = Math.ceil((firstFriday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      // If first Friday passed, calculate next month's first Friday
+      if (diff < -1) {
+        const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        firstFriday = new Date(nextMonth);
+        firstFriday.setDate(1 + ((5 - nextMonth.getDay() + 7) % 7));
+        return Math.ceil((firstFriday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      }
+      return diff;
+    };
+    
+    const nfpOffset = getFirstFridayOffset();
+    
     // Realistic upcoming events based on typical US economic calendar
     const mockEvents: EconomicEvent[] = [
-      // Today/Yesterday releases
-      {
-        id: 'gdp-q4',
-        name: 'GDP Growth Rate QoQ (Q4 Second Estimate)',
-        time: atTime(0, 8, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        actual: '2.3%',
-        forecast: '2.3%',
-        previous: '3.1%',
-        goldEffect: 'GDP in line with expectations → Neutral for Gold',
-      },
-      {
-        id: 'jobless-claims',
-        name: 'Initial Jobless Claims',
-        time: atTime(0, 8, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'medium',
-        actual: '242K',
-        forecast: '221K',
-        previous: '219K',
-        goldEffect: 'Higher claims → Weak labor → Gold supportive',
-      },
-      // Tomorrow
-      {
-        id: 'pce-price',
-        name: 'PCE Price Index m/m',
-        time: atTime(1, 8, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        forecast: '0.3%',
-        previous: '0.3%',
-        goldEffect: "Fed's preferred inflation gauge - key for Gold",
-      },
-      {
-        id: 'core-pce',
-        name: 'Core PCE Price Index m/m',
-        time: atTime(1, 8, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        forecast: '0.3%',
-        previous: '0.2%',
-        goldEffect: 'Hot Core PCE → Hawkish Fed → Gold pressure',
-      },
-      {
-        id: 'personal-income',
-        name: 'Personal Income m/m',
-        time: atTime(1, 8, 30),
-        country: 'US',
-        currency: 'USD',
-        impact: 'medium',
-        forecast: '0.4%',
-        previous: '0.4%',
-        goldEffect: 'Income growth affects consumer spending outlook',
-      },
-      // Next week
+      // ISM Manufacturing PMI - 1st business day of month at 10:00 EST (15:00 UTC)
       {
         id: 'ism-mfg',
         name: 'ISM Manufacturing PMI',
-        time: atTime(3, 10, 0),
+        time: dayOfMonth <= 3 ? atTimeUTC(0, 15, 0) : atTimeUTC(-dayOfMonth + 1, 15, 0), // If early in month, today; else mark as released
         country: 'US',
         currency: 'USD',
         impact: 'high',
+        actual: dayOfMonth <= 3 ? undefined : '50.3',
         forecast: '49.5',
         previous: '50.9',
         goldEffect: 'Below 50 = contraction → Safe haven Gold bid',
       },
+      // ISM Services PMI - 3rd business day of month at 10:00 EST (15:00 UTC)
       {
-        id: 'nfp-mar',
-        name: 'Nonfarm Payrolls',
-        time: atTime(7, 8, 30),
+        id: 'ism-svc',
+        name: 'ISM Services PMI',
+        time: atTimeUTC(dayOfMonth <= 3 ? 2 : -(dayOfMonth - 3), 15, 0),
         country: 'US',
         currency: 'USD',
         impact: 'high',
-        forecast: '160K',
+        forecast: '52.5',
+        previous: '52.8',
+        goldEffect: 'Services sector health affects rate expectations',
+      },
+      // Nonfarm Payrolls - 1st Friday of month at 8:30 EST (13:30 UTC)
+      {
+        id: 'nfp',
+        name: 'Nonfarm Payrolls',
+        time: atTimeUTC(nfpOffset, 13, 30),
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '185K',
         previous: '143K',
         goldEffect: 'Strong NFP → USD rally → Gold sell-off',
       },
+      // Unemployment Rate - same time as NFP
       {
         id: 'unemp-rate',
         name: 'Unemployment Rate',
-        time: atTime(7, 8, 30),
+        time: atTimeUTC(nfpOffset, 13, 30),
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -319,10 +300,11 @@ export class EconomicCalendarPanel extends Panel {
         previous: '4.0%',
         goldEffect: 'Rising unemployment → Fed dovish → Gold up',
       },
+      // Average Hourly Earnings - same time as NFP
       {
-        id: 'avg-hourly',
+        id: 'avg-earnings',
         name: 'Average Hourly Earnings m/m',
-        time: atTime(7, 8, 30),
+        time: atTimeUTC(nfpOffset, 13, 30),
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -330,11 +312,73 @@ export class EconomicCalendarPanel extends Panel {
         previous: '0.5%',
         goldEffect: 'Wage inflation signals → Fed tightening risk',
       },
-      // Fed events
+      // CPI - typically mid-month (around 12th-14th) at 8:30 EST (13:30 UTC)
       {
-        id: 'fomc-mar',
+        id: 'cpi',
+        name: 'CPI m/m',
+        time: atTimeUTC(dayOfMonth < 12 ? 12 - dayOfMonth : 30 + 12 - dayOfMonth, 13, 30),
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '0.2%',
+        previous: '0.3%',
+        goldEffect: 'Higher CPI → Inflation fears → Gold bullish',
+      },
+      // Core CPI - same time as CPI
+      {
+        id: 'core-cpi',
+        name: 'Core CPI m/m',
+        time: atTimeUTC(dayOfMonth < 12 ? 12 - dayOfMonth : 30 + 12 - dayOfMonth, 13, 30),
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '0.3%',
+        previous: '0.3%',
+        goldEffect: 'Core inflation drives Fed policy decisions',
+      },
+      // Retail Sales - typically around 15th-17th of month
+      {
+        id: 'retail-sales',
+        name: 'Retail Sales m/m',
+        time: atTimeUTC(dayOfMonth < 15 ? 15 - dayOfMonth : 30 + 15 - dayOfMonth, 13, 30),
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '0.3%',
+        previous: '-0.9%',
+        goldEffect: 'Strong retail → Consumer strength → Fed hawkish',
+      },
+      // PCE - typically last Friday of month at 8:30 EST (13:30 UTC)
+      {
+        id: 'pce',
+        name: 'PCE Price Index m/m',
+        time: atTimeUTC(dayOfMonth > 25 ? 0 : -(dayOfMonth - 28 + 7), 13, 30), // Roughly last week of month
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        actual: dayOfMonth > 25 ? undefined : '0.3%',
+        forecast: '0.3%',
+        previous: '0.3%',
+        goldEffect: "Fed's preferred inflation gauge - key for Gold",
+      },
+      // Core PCE
+      {
+        id: 'core-pce',
+        name: 'Core PCE Price Index m/m',
+        time: atTimeUTC(dayOfMonth > 25 ? 0 : -(dayOfMonth - 28 + 7), 13, 30),
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        actual: dayOfMonth > 25 ? undefined : '0.4%',
+        forecast: '0.3%',
+        previous: '0.2%',
+        goldEffect: 'Hot Core PCE → Hawkish Fed → Gold pressure',
+      },
+      // FOMC - typically 3rd week of alternate months
+      {
+        id: 'fomc',
         name: 'FOMC Interest Rate Decision',
-        time: atTime(21, 14, 0),
+        time: atTimeUTC(21 - dayOfMonth > 0 ? 21 - dayOfMonth : 30 + 21 - dayOfMonth, 19, 0),
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -342,14 +386,17 @@ export class EconomicCalendarPanel extends Panel {
         previous: '4.50%',
         goldEffect: 'Rate unchanged → Focus on dot plot guidance',
       },
+      // Initial Jobless Claims - every Thursday at 8:30 EST (13:30 UTC)
       {
-        id: 'powell-presser',
-        name: 'FOMC Press Conference',
-        time: atTime(21, 14, 30),
+        id: 'jobless-claims',
+        name: 'Initial Jobless Claims',
+        time: atTimeUTC((4 - dayOfWeek + 7) % 7, 13, 30), // Next Thursday
         country: 'US',
         currency: 'USD',
-        impact: 'high',
-        goldEffect: 'Powell tone sets market direction for weeks',
+        impact: 'medium',
+        forecast: '220K',
+        previous: '242K',
+        goldEffect: 'Higher claims → Weak labor → Gold supportive',
       },
     ];
 
