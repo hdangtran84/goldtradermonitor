@@ -1,9 +1,11 @@
 import './styles/base-layer.css';
 import './styles/happy-theme.css';
+import './styles/livestream-mode.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as Sentry from '@sentry/browser';
 import { inject } from '@vercel/analytics';
 import { App } from './App';
+import { keepAlive } from '@/utils';
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN?.trim();
 
@@ -194,6 +196,11 @@ if (urlParams.get('settings') === '1') {
     .init()
     .then(() => {
       clearChunkReloadGuard(chunkReloadStorageKey);
+      
+      // Enable 24/7 livestream mode - prevents browser throttling in background
+      // Uses Wake Lock API + silent audio fallback to keep the dashboard updating
+      void keepAlive.enable();
+      console.log('[Main] 24/7 livestream mode enabled');
     })
     .catch(console.error);
 }

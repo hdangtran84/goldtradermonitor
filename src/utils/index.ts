@@ -196,4 +196,8 @@ export { getCSSColor, invalidateColorCache } from './theme-colors';
 export { getStoredTheme, getCurrentTheme, setTheme, applyStoredTheme } from './theme-manager';
 export type { Theme } from './theme-manager';
 
+// 24/7 Livestream utilities - prevent browser throttling
+export { keepAlive, KeepAliveManager } from './keep-alive';
+export { backgroundTimer, BackgroundTimerManager } from './background-timer';
+
 import { getCurrentLanguage } from '../services/i18n';

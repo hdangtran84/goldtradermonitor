@@ -12,6 +12,7 @@ import {
   type ServiceStatusResult as ServiceStatus,
 } from '@/services/infrastructure';
 import { h, replaceChildren, type DomChild } from '@/utils/dom-utils';
+import { backgroundTimer, keepAlive } from '@/utils';
 
 interface LocalBackendStatus {
   enabled?: boolean;
@@ -39,19 +40,33 @@ export class ServiceStatusPanel extends Panel {
   private loading = true;
   private error: string | null = null;
   private filter: CategoryFilter = 'all';
-  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private refreshIntervalId: number | null = null; // Background timer ID
+  private visibilityUnsubscribe: (() => void) | null = null;
   private localBackend: LocalBackendStatus | null = null;
 
   constructor() {
     super({ id: 'service-status', title: t('panels.serviceStatus'), showCount: false });
     void this.fetchStatus();
-    this.refreshInterval = setInterval(() => this.fetchStatus(), 60000);
+    
+    // Use background timer (Web Worker-based) to avoid browser throttling
+    this.refreshIntervalId = backgroundTimer.setInterval(() => this.fetchStatus(), 60000);
+    
+    // Subscribe to visibility changes to catch up on missed updates
+    this.visibilityUnsubscribe = keepAlive.onVisibilityChange((isVisible) => {
+      if (isVisible && keepAlive.getHiddenDuration() > 60000) {
+        this.fetchStatus();
+      }
+    });
   }
 
   public destroy(): void {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
+    if (this.refreshIntervalId !== null) {
+      backgroundTimer.clearInterval(this.refreshIntervalId);
+      this.refreshIntervalId = null;
+    }
+    if (this.visibilityUnsubscribe) {
+      this.visibilityUnsubscribe();
+      this.visibilityUnsubscribe = null;
     }
     super.destroy();
   }

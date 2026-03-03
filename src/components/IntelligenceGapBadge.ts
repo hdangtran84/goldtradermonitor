@@ -4,6 +4,7 @@ import { t } from '@/services/i18n';
 import { getSignalContext } from '@/utils/analysis-constants';
 import { escapeHtml } from '@/utils/sanitize';
 import { trackFindingClicked } from '@/services/analytics';
+import { backgroundTimer } from '@/utils';
 
 const LOW_COUNT_THRESHOLD = 3;
 const MAX_VISIBLE_FINDINGS = 10;
@@ -31,7 +32,7 @@ export class IntelligenceFindingsBadge {
   private badge: HTMLElement;
   private dropdown: HTMLElement;
   private isOpen = false;
-  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private refreshIntervalId: number | null = null; // Background timer ID
   private lastFindingCount = 0;
   private onSignalClick: ((signal: CorrelationSignal) => void) | null = null;
   private onAlertClick: ((alert: UnifiedAlert) => void) | null = null;
@@ -163,9 +164,9 @@ export class IntelligenceFindingsBadge {
     } else {
       localStorage.setItem(STORAGE_KEY, 'hidden');
       document.removeEventListener('click', this.boundCloseDropdown);
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval);
-        this.refreshInterval = null;
+      if (this.refreshIntervalId !== null) {
+        backgroundTimer.clearInterval(this.refreshIntervalId);
+        this.refreshIntervalId = null;
       }
       this.closeDropdown();
       this.dismissContextMenu();
@@ -211,7 +212,8 @@ export class IntelligenceFindingsBadge {
   }
 
   private startRefresh(): void {
-    this.refreshInterval = setInterval(() => this.update(), REFRESH_INTERVAL_MS);
+    // Use background timer (Web Worker-based) to avoid browser throttling
+    this.refreshIntervalId = backgroundTimer.setInterval(() => this.update(), REFRESH_INTERVAL_MS);
   }
 
   public update(): void {
@@ -513,8 +515,9 @@ export class IntelligenceFindingsBadge {
   }
 
   public destroy(): void {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
+    if (this.refreshIntervalId !== null) {
+      backgroundTimer.clearInterval(this.refreshIntervalId);
+      this.refreshIntervalId = null;
     }
     document.removeEventListener('click', this.boundCloseDropdown);
     this.badge.remove();

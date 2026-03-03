@@ -6,10 +6,13 @@
  * Data sources:
  * - Primary: XAUT/USDT (Tether Gold) from CoinGecko for 24/7 crypto gold data
  * - Fallback: GC=F (COMEX Gold Futures) from Yahoo Finance for market hours
+ * 
+ * Features 24/7 background updates using Web Worker-based timers to avoid
+ * browser throttling when tab is inactive.
  */
 import * as d3 from 'd3';
 import { proxyUrl } from '@/utils/proxy';
-import { getCurrentTheme } from '@/utils';
+import { getCurrentTheme, backgroundTimer, keepAlive } from '@/utils';
 import { fetchAndAnalyzeSentiment, adjustPredictionWithSentiment, type SentimentResult } from '@/services/news-sentiment';
 
 export type GoldTimeRange = '1h' | '6h' | '24h' | '7d';
@@ -119,11 +122,12 @@ export class GoldPriceChart {
   private chartContainer: HTMLElement | null = null;
   private timeRangeSelector: HTMLElement | null = null;
   private lastUpdatedDisplay: HTMLElement | null = null;
-  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private refreshIntervalId: number | null = null; // Background timer ID
   private currentTimeRange: GoldTimeRange = '1h';
   private svg: d3.Selection<SVGSVGElement, unknown, null, undefined> | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private destroyCleanup: (() => void)[] = [];
+  private visibilityUnsubscribe: (() => void) | null = null;
   
   // Global 7D slope for synchronized predictions across timeframes
   private globalSlope: number = 0;
@@ -1140,14 +1144,36 @@ export class GoldPriceChart {
     }
   }
 
+  /**
+   * Start auto-refresh using Web Worker-based timer for 24/7 operation
+   * This timer is not throttled when the browser tab is in background
+   */
   private startAutoRefresh(): void {
-    this.refreshInterval = setInterval(() => {
+    // Use background timer (Web Worker-based) to avoid browser throttling
+    this.refreshIntervalId = backgroundTimer.setInterval(() => {
       this.fetchData();
     }, REFRESH_INTERVAL_MS);
 
+    // Subscribe to visibility changes to catch up on missed updates
+    this.visibilityUnsubscribe = keepAlive.onVisibilityChange((isVisible) => {
+      if (isVisible) {
+        // Tab became visible - refresh data immediately to catch up
+        const hiddenDuration = keepAlive.getHiddenDuration();
+        if (hiddenDuration > REFRESH_INTERVAL_MS) {
+          console.log('[GoldPriceChart] Tab visible after being hidden, refreshing data');
+          this.fetchData();
+        }
+      }
+    });
+
     this.destroyCleanup.push(() => {
-      if (this.refreshInterval) {
-        clearInterval(this.refreshInterval);
+      if (this.refreshIntervalId !== null) {
+        backgroundTimer.clearInterval(this.refreshIntervalId);
+        this.refreshIntervalId = null;
+      }
+      if (this.visibilityUnsubscribe) {
+        this.visibilityUnsubscribe();
+        this.visibilityUnsubscribe = null;
       }
     });
   }

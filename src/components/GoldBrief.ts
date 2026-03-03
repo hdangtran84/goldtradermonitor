@@ -2,8 +2,12 @@
  * GoldBrief - AI-powered Gold Market Brief component
  * Displays a horizontal scrolling ticker at the top of the dashboard
  * Refreshes every 5-10 minutes via Groq Llama API
+ * 
+ * Features 24/7 background updates using Web Worker-based timers to avoid
+ * browser throttling when tab is inactive.
  */
 import { proxyUrl } from '@/utils/proxy';
+import { backgroundTimer, keepAlive } from '@/utils';
 
 export interface GoldBriefState {
   brief: string | null;
@@ -21,7 +25,8 @@ export class GoldBrief {
   private container: HTMLElement;
   private state: GoldBriefState;
   private refreshBtn: HTMLButtonElement | null = null;
-  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private refreshIntervalId: number | null = null; // Background timer ID
+  private visibilityUnsubscribe: (() => void) | null = null;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -198,19 +203,41 @@ export class GoldBrief {
     }
   }
 
+  /**
+   * Start auto-refresh using Web Worker-based timer for 24/7 operation
+   * This timer is not throttled when the browser tab is in background
+   */
   private startAutoRefresh(): void {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
+    if (this.refreshIntervalId !== null) {
+      backgroundTimer.clearInterval(this.refreshIntervalId);
     }
-    this.refreshInterval = setInterval(() => {
+    
+    // Use background timer (Web Worker-based) to avoid browser throttling
+    this.refreshIntervalId = backgroundTimer.setInterval(() => {
       this.fetchBrief();
     }, REFRESH_INTERVAL_MS);
+
+    // Subscribe to visibility changes to catch up on missed updates
+    this.visibilityUnsubscribe = keepAlive.onVisibilityChange((isVisible) => {
+      if (isVisible) {
+        const hiddenDuration = keepAlive.getHiddenDuration();
+        // If hidden for longer than refresh interval, refresh immediately
+        if (hiddenDuration > REFRESH_INTERVAL_MS) {
+          console.log('[GoldBrief] Tab visible after being hidden, refreshing data');
+          this.fetchBrief();
+        }
+      }
+    });
   }
 
   public destroy(): void {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
+    if (this.refreshIntervalId !== null) {
+      backgroundTimer.clearInterval(this.refreshIntervalId);
+      this.refreshIntervalId = null;
+    }
+    if (this.visibilityUnsubscribe) {
+      this.visibilityUnsubscribe();
+      this.visibilityUnsubscribe = null;
     }
     this.container.innerHTML = '';
   }

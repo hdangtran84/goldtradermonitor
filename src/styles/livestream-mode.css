@@ -1,0 +1,155 @@
+/**
+ * 24/7 Livestream Mode CSS
+ * 
+ * Styles to ensure animations and visual updates continue
+ * when the browser tab is in background or unfocused.
+ * 
+ * Note: CSS animations are typically paused by browsers when tabs are inactive.
+ * These styles use techniques to encourage browsers to keep animating:
+ * 1. will-change hints for GPU compositing
+ * 2. 3D transform triggers for hardware acceleration
+ * 3. Visibility override styles
+ */
+
+/* Force ticker animations to use GPU compositing for smoother operation */
+.gold-brief-ticker .ticker-track,
+.gold-disclaimer-ticker .ticker-content {
+  will-change: transform;
+  /* Use 3D transform to trigger hardware acceleration */
+  transform: translateZ(0);
+  /* Ensure animation isn't paused */
+  animation-play-state: running !important;
+}
+
+/* Prevent browsers from aggressively optimizing away animations */
+.ticker-text,
+.ticker-text-duplicate {
+  will-change: contents;
+  backface-visibility: hidden;
+}
+
+/* Keep pulse animations running for notification badges */
+.intel-findings-badge.pulse,
+.notification-badge.pulse {
+  will-change: transform, box-shadow;
+  animation-play-state: running !important;
+}
+
+/* Force chart elements to stay active */
+.gold-chart-wrapper {
+  will-change: contents;
+}
+
+/* Loading spinners should always animate */
+.loading,
+.spinner,
+[class*="loading"],
+.ticker-refresh-btn.loading {
+  animation-play-state: running !important;
+  will-change: transform;
+}
+
+/* Data source badge - keep blinking */
+.gold-data-source-badge {
+  will-change: opacity;
+  animation-play-state: running !important;
+}
+
+/* Create pulse animation for live indicator */
+@keyframes live-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.gold-data-source-badge.xaut::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: #ff0000;
+  border-radius: 50%;
+  margin-right: 4px;
+  animation: live-pulse 1.5s ease-in-out infinite;
+  animation-play-state: running !important;
+}
+
+/* Panel refresh indicators */
+.panel-header .refresh-indicator {
+  will-change: transform;
+  animation-play-state: running !important;
+}
+
+/* Ensure SVG charts stay rendered */
+.gold-chart-container svg {
+  will-change: auto;
+}
+
+/* Force browser to keep rendering animated elements */
+.gold-brief-ticker,
+.gold-disclaimer-ticker,
+.intel-findings-badge,
+#gold-price-chart,
+.economic-calendar,
+.live-news-panel {
+  contain: none;
+  content-visibility: visible;
+}
+
+/* 24/7 Mode indicator (optional - can be enabled via JS) */
+.livestream-mode-indicator {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ff4444;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: monospace;
+  border: 1px solid #ff4444;
+  pointer-events: none;
+}
+
+.livestream-mode-indicator::before {
+  content: '●';
+  animation: live-pulse 1s ease-in-out infinite;
+  color: #ff0000;
+}
+
+.livestream-mode-indicator.hidden,
+.livestream-mode-indicator[hidden] {
+  display: none;
+}
+
+/* Reduce motion for users who prefer it, but keep critical updates */
+@media (prefers-reduced-motion: reduce) {
+  /* Allow essential animations for data updates */
+  .gold-brief-ticker .ticker-track {
+    animation-duration: 120s; /* Slower scrolling */
+  }
+  
+  .gold-disclaimer-ticker .ticker-content {
+    animation-duration: 60s;
+  }
+  
+  /* Keep critical indicators animating */
+  .gold-data-source-badge.xaut::before {
+    animation-duration: 3s;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .livestream-mode-indicator {
+    background: #000;
+    border-width: 2px;
+  }
+}

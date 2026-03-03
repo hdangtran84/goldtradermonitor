@@ -12,10 +12,14 @@
  * 2. Forex Factory RSS (free, limited)
  * 3. FRED API for US economic data releases
  * 4. Mock data fallback
+ * 
+ * Features 24/7 background updates using Web Worker-based timers to avoid
+ * browser throttling when tab is inactive.
  */
 
 import { Panel } from './Panel';
 import { escapeHtml } from '@/utils/sanitize';
+import { backgroundTimer, keepAlive } from '@/utils';
 
 export interface EconomicEvent {
   id: string;
@@ -39,7 +43,8 @@ const REFRESH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 
 export class EconomicCalendarPanel extends Panel {
   private events: EconomicEvent[] = [];
-  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private refreshIntervalId: number | null = null; // Background timer ID
+  private visibilityUnsubscribe: (() => void) | null = null;
   private loading = true;
   private error: string | null = null;
   private weekStart: Date = new Date(); // Monday 00:00 UTC
@@ -90,15 +95,33 @@ export class EconomicCalendarPanel extends Panel {
     this.startAutoRefresh();
   }
 
+  /**
+   * Start auto-refresh using Web Worker-based timer for 24/7 operation
+   * This timer is not throttled when the browser tab is in background
+   */
   private startAutoRefresh(): void {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
+    if (this.refreshIntervalId !== null) {
+      backgroundTimer.clearInterval(this.refreshIntervalId);
     }
-    this.refreshInterval = setInterval(() => {
+    
+    // Use background timer (Web Worker-based) to avoid browser throttling
+    this.refreshIntervalId = backgroundTimer.setInterval(() => {
       // Update week boundaries in case week changed
       this.updateWeekBoundaries();
       this.fetchEvents();
     }, REFRESH_INTERVAL_MS);
+
+    // Subscribe to visibility changes to catch up on missed updates
+    this.visibilityUnsubscribe = keepAlive.onVisibilityChange((isVisible) => {
+      if (isVisible) {
+        const hiddenDuration = keepAlive.getHiddenDuration();
+        if (hiddenDuration > REFRESH_INTERVAL_MS) {
+          console.log('[EconomicCalendarPanel] Tab visible after being hidden, refreshing data');
+          this.updateWeekBoundaries();
+          this.fetchEvents();
+        }
+      }
+    });
   }
 
   private async fetchEvents(): Promise<void> {
@@ -507,9 +530,13 @@ export class EconomicCalendarPanel extends Panel {
   }
 
   destroy(): void {
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
+    if (this.refreshIntervalId !== null) {
+      backgroundTimer.clearInterval(this.refreshIntervalId);
+      this.refreshIntervalId = null;
+    }
+    if (this.visibilityUnsubscribe) {
+      this.visibilityUnsubscribe();
+      this.visibilityUnsubscribe = null;
     }
     super.destroy?.();
   }
