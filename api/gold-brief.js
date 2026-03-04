@@ -1,6 +1,7 @@
 import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 
-export const config = { runtime: 'edge' };
+// Use iad1 (US East) region - Groq may be blocking certain Edge regions  
+export const config = { runtime: 'edge', regions: ['iad1'] };
 
 const GOLD_BRIEF_PROMPT = `You are a professional gold market analyst. Provide a concise market brief (3-5 sentences) covering:
 
