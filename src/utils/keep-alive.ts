@@ -85,6 +85,13 @@ class KeepAliveManager {
   }
   
   /**
+   * Check if keep-alive mode is currently active
+   */
+  get isActive(): boolean {
+    return this.isEnabled;
+  }
+
+  /**
    * Check if tab is currently visible
    */
   get isVisible(): boolean {

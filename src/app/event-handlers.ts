@@ -16,6 +16,7 @@ import {
   ExportPanel,
   getCurrentTheme,
   setTheme,
+  keepAlive,
 } from '@/utils';
 import {
   STORAGE_KEYS,
@@ -242,6 +243,11 @@ export class EventHandlerManager implements AppModule {
   resetIdleTimer(): void {
     if (this.idleTimeoutId) {
       clearTimeout(this.idleTimeoutId);
+    }
+    // Skip idle detection when keepAlive is enabled (livestream mode)
+    // This ensures animations continue running during 24/7 streams
+    if (keepAlive.isActive) {
+      return;
     }
     this.idleTimeoutId = setTimeout(() => {
       if (!document.hidden) {
