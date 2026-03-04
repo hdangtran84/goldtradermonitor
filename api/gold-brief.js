@@ -49,6 +49,10 @@ export default async function handler(req) {
     });
   }
 
+  // Debug: show key prefix to verify correct key is loaded
+  const keyPrefix = groqApiKey.slice(0, 10);
+  const keyLength = groqApiKey.length;
+
   try {
     // Fetch current gold price context from Yahoo Finance
     let priceContext = '';
@@ -127,6 +131,7 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ 
         error: `Groq API error: ${groqRes.status}`,
         detail: errText.slice(0, 200),
+        keyInfo: `prefix=${keyPrefix}, len=${keyLength}`,
         brief: null,
         timestamp: null,
       }), {
