@@ -1,7 +1,8 @@
 // GDELT Sentiment API proxy for Gold price news sentiment
 import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 
-export const config = { runtime: 'edge' };
+// Pin to US East - GDELT may block certain regions
+export const config = { runtime: 'edge', regions: ['iad1'] };
 
 /**
  * Proxy requests to GDELT DOC 2.0 API for real-time news sentiment
@@ -34,7 +35,7 @@ export default async function handler(request) {
     gdeltUrl.searchParams.set('format', 'json');
     
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 20000); // Increased timeout
     
     try {
       const response = await fetch(gdeltUrl.toString(), {
@@ -58,7 +59,7 @@ export default async function handler(request) {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+          'Cache-Control': 'public, max-age=600, s-maxage=900, stale-while-revalidate=300', // 15 min CDN cache
         },
       });
     } finally {
@@ -68,6 +69,7 @@ export default async function handler(request) {
     console.error('[GDELT Sentiment] Error:', error.message);
     
     // Return empty but valid response so frontend can use fallback
+    // Cache errors too to prevent repeated failed calls
     return new Response(JSON.stringify({ 
       articles: [],
       error: error.message 
@@ -76,6 +78,7 @@ export default async function handler(request) {
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=300, s-maxage=600', // Cache errors for 10 min on CDN
       },
     });
   }

@@ -83,7 +83,7 @@ export default async function handler(req) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=120',
+        'Cache-Control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=300', // 10 min CDN
         'X-Polymarket-Source': 'gamma',
         ...corsHeaders,
       },
