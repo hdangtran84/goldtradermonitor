@@ -44,10 +44,10 @@ const WORLD_APIS = new Set([
 
 // Gold/Finance variant - only gold trading related services
 const FINANCE_FEEDS = new Set([
-  'Finance', 'Polymarket', 'Markets'
+  'Polymarket', 'Markets'
 ]);
 const FINANCE_APIS = new Set([
-  'RSS2JSON', 'CoinGecko', 'Finnhub', 'FRED', 'Polymarket'
+  'RSS2JSON', 'Finnhub', 'CoinGecko', 'Polymarket'
 ]);
 
 import { t } from '../services/i18n';
@@ -133,6 +133,11 @@ export class StatusPanel extends Panel {
     this.allowedApis.forEach(name => {
       this.apis.set(name, { name, status: 'disabled' });
     });
+
+    // Listen for external status updates (e.g., from GoldPriceChart for CoinGecko)
+    window.addEventListener('api-status-update', ((e: CustomEvent<{ name: string; status: 'ok' | 'error' }>) => {
+      this.updateApi(e.detail.name, { status: e.detail.status });
+    }) as EventListener);
   }
 
   public updateFeed(name: string, status: Partial<FeedStatus>): void {

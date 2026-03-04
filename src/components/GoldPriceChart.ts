@@ -421,6 +421,7 @@ export class GoldPriceChart {
       
       if (!response.ok) {
         console.warn('[GoldPriceChart] CoinGecko response not ok:', response.status);
+        window.dispatchEvent(new CustomEvent('api-status-update', { detail: { name: 'CoinGecko', status: 'error' } }));
         return null;
       }
       
@@ -428,6 +429,7 @@ export class GoldPriceChart {
       
       if (!data?.prices || !Array.isArray(data.prices) || data.prices.length === 0) {
         console.warn('[GoldPriceChart] No prices from CoinGecko');
+        window.dispatchEvent(new CustomEvent('api-status-update', { detail: { name: 'CoinGecko', status: 'error' } }));
         return null;
       }
       
@@ -453,9 +455,13 @@ export class GoldPriceChart {
       const cutoff = now - cutoffConfig[this.currentTimeRange];
       const filteredPoints = allPoints.filter(p => p.timestamp.getTime() >= cutoff);
       
+      // Report CoinGecko success to status panel
+      window.dispatchEvent(new CustomEvent('api-status-update', { detail: { name: 'CoinGecko', status: 'ok' } }));
+      
       return filteredPoints.length > 0 ? filteredPoints : allPoints.slice(-60);
     } catch (err) {
       console.error('[GoldPriceChart] CoinGecko fetch error:', err);
+      window.dispatchEvent(new CustomEvent('api-status-update', { detail: { name: 'CoinGecko', status: 'error' } }));
       return null;
     }
   }
