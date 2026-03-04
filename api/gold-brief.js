@@ -100,6 +100,7 @@ export default async function handler(req) {
       headers: {
         'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json',
+        'User-Agent': 'GoldTraderMonitor/1.0',
       },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
