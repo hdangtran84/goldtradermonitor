@@ -1,6 +1,6 @@
 import { getCorsHeaders, isDisallowedOrigin } from './_cors.js';
 
-// Use iad1 (US East) region - Groq may be blocking certain Edge regions  
+// Pin to US East region - Groq blocks some Edge regions (e.g., hkg1)
 export const config = { runtime: 'edge', regions: ['iad1'] };
 
 const GOLD_BRIEF_PROMPT = `You are a professional gold market analyst. Provide a concise market brief (3-5 sentences) covering:
@@ -41,7 +41,6 @@ export default async function handler(req) {
   if (!groqApiKey) {
     return new Response(JSON.stringify({ 
       error: 'GROQ_API_KEY not configured',
-      debug: `env keys: ${Object.keys(process.env).filter(k => k.includes('GROQ') || k.includes('API')).join(', ')}`,
       brief: null,
       timestamp: null,
     }), {
@@ -49,10 +48,6 @@ export default async function handler(req) {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
-
-  // Debug: show key prefix to verify correct key is loaded
-  const keyPrefix = groqApiKey.slice(0, 10);
-  const keyLength = groqApiKey.length;
 
   try {
     // Fetch current gold price context from Yahoo Finance
@@ -132,8 +127,6 @@ export default async function handler(req) {
 
       return new Response(JSON.stringify({ 
         error: `Groq API error: ${groqRes.status}`,
-        detail: errText.slice(0, 200),
-        keyInfo: `prefix=${keyPrefix}, len=${keyLength}`,
         brief: null,
         timestamp: null,
       }), {
