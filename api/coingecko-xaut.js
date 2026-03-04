@@ -31,7 +31,16 @@ export default async function handler(req) {
 
   try {
     const url = new URL(req.url);
-    const days = url.searchParams.get('days') || '1';
+    const rawDays = parseInt(url.searchParams.get('days') || '1', 10);
+    
+    // Normalize days to common buckets for better cache hits: 1, 7, 14, 30, 90, 365
+    let days;
+    if (rawDays <= 1) days = '1';
+    else if (rawDays <= 7) days = '7';
+    else if (rawDays <= 14) days = '14';
+    else if (rawDays <= 30) days = '30';
+    else if (rawDays <= 90) days = '90';
+    else days = '365';
 
     const coingeckoUrl = `https://api.coingecko.com/api/v3/coins/tether-gold/market_chart?vs_currency=usd&days=${days}`;
 
@@ -53,21 +62,29 @@ export default async function handler(req) {
       status: response.status,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=120, s-maxage=300, stale-while-revalidate=120', // 5 min CDN, 2 min client
+        'Cache-Control': 'public, max-age=180, s-maxage=600, stale-while-revalidate=300', // 10 min CDN, 3 min client
         ...corsHeaders,
       },
     });
   } catch (err) {
     if (err.name === 'AbortError') {
-      return new Response(JSON.stringify({ error: 'Request timed out' }), {
-        status: 504,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      return new Response(JSON.stringify({ error: 'Request timed out', prices: [] }), {
+        status: 200, // Return 200 so frontend degrades gracefully
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=60, s-maxage=120', // Cache timeout errors briefly
+          ...corsHeaders 
+        },
       });
     }
     console.error('[coingecko-xaut] Error:', err);
-    return new Response(JSON.stringify({ error: 'Failed to fetch from CoinGecko' }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    return new Response(JSON.stringify({ error: 'Failed to fetch from CoinGecko', prices: [] }), {
+      status: 200, // Return 200 for graceful degradation
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60, s-maxage=120', // Cache errors briefly
+        ...corsHeaders 
+      },
     });
   }
 }

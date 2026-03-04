@@ -3,6 +3,7 @@ import type { TimelineEvent } from '@/components/CountryTimeline';
 import { CountryTimeline } from '@/components/CountryTimeline';
 import { CountryBriefPage } from '@/components/CountryBriefPage';
 import { reverseGeocode } from '@/utils/reverse-geocode';
+import { cacheableFetch } from '@/utils/cacheable-fetch';
 import { getCountryAtCoordinates, hasCountryGeometry, isCoordinateInCountry } from '@/services/country-geometry';
 import { calculateCII, getCountryData, TIER1_COUNTRIES } from '@/services/country-instability';
 import { signalAggregator } from '@/services/signal-aggregator';
@@ -128,7 +129,7 @@ export class CountryIntelManager implements AppModule {
     this.ctx.countryBriefPage.show(country, code, score, signals);
     this.ctx.map?.highlightCountry(code);
 
-    const marketClient = new MarketServiceClient('', { fetch: (...args: Parameters<typeof globalThis.fetch>) => globalThis.fetch(...args) });
+    const marketClient = new MarketServiceClient('', { fetch: cacheableFetch });
     const stockPromise = marketClient.getCountryStockIndex({ countryCode: code })
       .then((resp) => ({
         available: resp.available,

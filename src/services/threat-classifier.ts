@@ -295,8 +295,9 @@ import {
   ApiError,
   type ClassifyEventResponse,
 } from '@/generated/client/worldmonitor/intelligence/v1/service_client';
+import { cacheableFetch } from '@/utils/cacheable-fetch';
 
-const classifyClient = new IntelligenceServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
+const classifyClient = new IntelligenceServiceClient('', { fetch: cacheableFetch });
 
 const VALID_LEVELS: Record<string, ThreatLevel> = {
   critical: 'critical', high: 'high', medium: 'medium', low: 'low', info: 'info',

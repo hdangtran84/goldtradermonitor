@@ -50,7 +50,37 @@
     {
       "source": "/api/:domain/v1/:rpc",
       "headers": [
-        { "key": "Cache-Control", "value": "public, s-maxage=300, stale-while-revalidate=60" }
+        { "key": "Cache-Control", "value": "public, s-maxage=600, stale-while-revalidate=300" }
+      ]
+    },
+    {
+      "source": "/api/coingecko-xaut",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=600, stale-while-revalidate=300" }
+      ]
+    },
+    {
+      "source": "/api/gdelt-sentiment",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=1800, stale-while-revalidate=600" }
+      ]
+    },
+    {
+      "source": "/api/polymarket",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=1200, stale-while-revalidate=600" }
+      ]
+    },
+    {
+      "source": "/api/gold-brief",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=1800, stale-while-revalidate=600" }
+      ]
+    },
+    {
+      "source": "/api/rss-proxy",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, s-maxage=1800, stale-while-revalidate=600" }
       ]
     }
   ]

@@ -101,6 +101,13 @@ export default async function handler(request: Request): Promise<Response> {
     mergedHeaders.set(key, value);
   }
 
+  // Add Cache-Control for successful GET requests (CDN caching)
+  // Read-only RPCs via GET can be cached; POST responses should not be
+  if (request.method === 'GET' && response.status === 200) {
+    // 2 min client cache, 5 min CDN cache, serve stale while revalidating
+    mergedHeaders.set('Cache-Control', 'public, max-age=120, s-maxage=300, stale-while-revalidate=120');
+  }
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

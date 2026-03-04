@@ -17,13 +17,14 @@ import {
   type GetEnergyCapacityResponse,
 } from '@/generated/client/worldmonitor/economic/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
+import { cacheableFetch } from '@/utils/cacheable-fetch';
 import { getCSSColor } from '@/utils';
 import { isFeatureAvailable } from '../runtime-config';
 import { dataFreshness } from '../data-freshness';
 
 // ---- Client + Circuit Breakers ----
 
-const client = new EconomicServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
+const client = new EconomicServiceClient('', { fetch: cacheableFetch });
 const fredBreaker = createCircuitBreaker<GetFredSeriesResponse>({ name: 'FRED Economic', cacheTtlMs: 15 * 60 * 1000, persistCache: true });
 const wbBreaker = createCircuitBreaker<ListWorldBankIndicatorsResponse>({ name: 'World Bank', cacheTtlMs: 30 * 60 * 1000, persistCache: true });
 const eiaBreaker = createCircuitBreaker<GetEnergyPricesResponse>({ name: 'EIA Energy', cacheTtlMs: 15 * 60 * 1000, persistCache: true });

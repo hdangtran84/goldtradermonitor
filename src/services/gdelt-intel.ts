@@ -6,6 +6,7 @@ import {
   type SearchGdeltDocumentsResponse,
 } from '@/generated/client/worldmonitor/intelligence/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
+import { cacheableFetch } from '@/utils/cacheable-fetch';
 
 export interface GdeltArticle {
   title: string;
@@ -124,7 +125,7 @@ export function getIntelTopics(): IntelTopic[] {
 
 // ---- Sebuf client ----
 
-const client = new IntelligenceServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
+const client = new IntelligenceServiceClient('', { fetch: cacheableFetch });
 const gdeltBreaker = createCircuitBreaker<SearchGdeltDocumentsResponse>({ name: 'GDELT Intelligence', cacheTtlMs: 5 * 60 * 1000, persistCache: true });
 
 const emptyGdeltFallback: SearchGdeltDocumentsResponse = { articles: [], query: '', error: '' };

@@ -5,11 +5,12 @@ import {
   type HackernewsItem,
 } from '@/generated/client/worldmonitor/research/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
+import { cacheableFetch } from '@/utils/cacheable-fetch';
 
 // Re-export proto types (no legacy mapping needed -- proto types are clean)
 export type { ArxivPaper, GithubRepo, HackernewsItem };
 
-const client = new ResearchServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
+const client = new ResearchServiceClient('', { fetch: cacheableFetch });
 
 const arxivBreaker = createCircuitBreaker<ArxivPaper[]>({ name: 'ArXiv Papers', cacheTtlMs: 10 * 60 * 1000, persistCache: true });
 const trendingBreaker = createCircuitBreaker<GithubRepo[]>({ name: 'GitHub Trending', cacheTtlMs: 10 * 60 * 1000, persistCache: true });

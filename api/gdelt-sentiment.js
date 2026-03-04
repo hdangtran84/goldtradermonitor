@@ -21,11 +21,30 @@ export default async function handler(request) {
   }
   
   try {
-    // Default query for Gold-related news
+    // Default query for Gold-related news - normalized for better cache hits
     const url = new URL(request.url);
-    const query = url.searchParams.get('query') || 
-      'gold OR XAUUSD OR "gold price" OR geopolitical OR "Federal Reserve" OR inflation';
-    const maxRecords = url.searchParams.get('maxrecords') || '30';
+    const rawQuery = url.searchParams.get('query');
+    
+    // Canonical default query - use this if no custom query provided
+    const DEFAULT_QUERY = 'gold OR XAUUSD OR "gold price" OR geopolitical OR "Federal Reserve" OR inflation';
+    
+    // Normalize query: lowercase, trim, use default if empty/similar
+    let query = rawQuery?.trim() || DEFAULT_QUERY;
+    
+    // Normalize common variations to canonical form for better cache hits
+    const normalizedCheck = query.toLowerCase().replace(/\s+/g, ' ');
+    if (
+      normalizedCheck.includes('gold') && 
+      normalizedCheck.includes('xauusd') &&
+      !rawQuery // Only normalize if using default-ish query
+    ) {
+      query = DEFAULT_QUERY;
+    }
+    
+    // Normalize maxrecords to common values for better cache hits
+    const rawMaxRecords = parseInt(url.searchParams.get('maxrecords') || '30', 10);
+    // Bucket to common values: 10, 30, 50 (reduces cache key variants)
+    const maxRecords = rawMaxRecords <= 15 ? '10' : rawMaxRecords <= 40 ? '30' : '50';
     
     // Build GDELT DOC API URL
     const gdeltUrl = new URL('https://api.gdeltproject.org/api/v2/doc/doc');
@@ -59,7 +78,7 @@ export default async function handler(request) {
         headers: {
           ...corsHeaders,
           'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=600, s-maxage=900, stale-while-revalidate=300', // 15 min CDN cache
+          'Cache-Control': 'public, max-age=900, s-maxage=1800, stale-while-revalidate=600', // 30 min CDN cache
         },
       });
     } finally {

@@ -83,7 +83,7 @@ export default async function handler(req) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300, s-maxage=600, stale-while-revalidate=300', // 10 min CDN
+        'Cache-Control': 'public, max-age=600, s-maxage=1200, stale-while-revalidate=600', // 20 min CDN
         'X-Polymarket-Source': 'gamma',
         ...corsHeaders,
       },
@@ -91,11 +91,12 @@ export default async function handler(req) {
   } catch (error) {
     const isTimeout = error?.name === 'AbortError';
     // Return empty array on error for graceful degradation
+    // Cache errors on CDN to prevent repeated failed calls
     return new Response(JSON.stringify([]), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300',
+        'Cache-Control': 'public, max-age=300, s-maxage=600', // 10 min CDN cache on errors
         ...corsHeaders,
       },
     });

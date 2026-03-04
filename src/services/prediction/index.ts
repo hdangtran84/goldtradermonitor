@@ -1,5 +1,6 @@
 import { PredictionServiceClient } from '@/generated/client/worldmonitor/prediction/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
+import { cacheableFetch } from '@/utils/cacheable-fetch';
 import { SITE_VARIANT } from '@/config';
 import { isDesktopRuntime } from '@/services/runtime';
 import { tryInvokeTauri } from '@/services/tauri-bridge';
@@ -48,7 +49,7 @@ const isLocalhostRuntime = typeof window !== 'undefined' && ['localhost', '127.0
 const breaker = createCircuitBreaker<PredictionMarket[]>({ name: 'Polymarket', cacheTtlMs: 5 * 60 * 1000, persistCache: true });
 
 // Sebuf client for strategy 4
-const client = new PredictionServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
+const client = new PredictionServiceClient('', { fetch: cacheableFetch });
 
 // Track whether direct browser->Polymarket fetch works
 // Cloudflare blocks server-side TLS but browsers pass JA3 fingerprint checks

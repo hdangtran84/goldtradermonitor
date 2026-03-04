@@ -13,10 +13,11 @@ import {
   type CiiScore,
   type StrategicRisk,
 } from '@/generated/client/worldmonitor/intelligence/v1/service_client';
+import { cacheableFetch } from '@/utils/cacheable-fetch';
 
 // ---- Sebuf client ----
 
-const client = new IntelligenceServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
+const client = new IntelligenceServiceClient('', { fetch: cacheableFetch });
 
 // ---- Legacy types (preserved for consumer compatibility) ----
 

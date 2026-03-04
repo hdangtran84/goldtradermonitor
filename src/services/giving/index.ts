@@ -7,6 +7,7 @@ import {
   type InstitutionalGiving as ProtoInstitutional,
 } from '@/generated/client/worldmonitor/giving/v1/service_client';
 import { createCircuitBreaker } from '@/utils';
+import { cacheableFetch } from '@/utils/cacheable-fetch';
 
 // ─── Consumer-friendly types ───
 
@@ -123,7 +124,7 @@ function toDisplayInstitutional(proto?: ProtoInstitutional): InstitutionalGiving
 
 // ─── Client + circuit breaker + caching ───
 
-const client = new GivingServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
+const client = new GivingServiceClient('', { fetch: cacheableFetch });
 
 const emptyResult: GivingSummary = {
   generatedAt: new Date().toISOString(),

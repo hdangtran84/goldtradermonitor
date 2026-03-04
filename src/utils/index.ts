@@ -200,4 +200,7 @@ export type { Theme } from './theme-manager';
 export { keepAlive, KeepAliveManager } from './keep-alive';
 export { backgroundTimer, BackgroundTimerManager } from './background-timer';
 
+// Caching utilities for CDN optimization
+export { cacheableFetch, createCacheableFetch } from './cacheable-fetch';
+
 import { getCurrentLanguage } from '../services/i18n';

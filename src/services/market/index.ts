@@ -11,11 +11,12 @@ import {
   type MarketQuote as ProtoMarketQuote,
 } from '@/generated/client/worldmonitor/market/v1/service_client';
 import type { MarketData, CryptoData } from '@/types';
-import { createCircuitBreaker } from '@/utils';
+import { createCircuitBreaker, cacheableFetch } from '@/utils';
 
 // ---- Client + Circuit Breakers ----
+// Use cacheableFetch to enable CDN caching via GET requests for read-only RPCs
 
-const client = new MarketServiceClient('', { fetch: (...args: Parameters<typeof fetch>) => globalThis.fetch(...args) });
+const client = new MarketServiceClient('', { fetch: cacheableFetch });
 const stockBreaker = createCircuitBreaker<ListMarketQuotesResponse>({ name: 'Market Quotes', cacheTtlMs: 0 });
 
 const emptyStockFallback: ListMarketQuotesResponse = { quotes: [], finnhubSkipped: false, skipReason: '' };
