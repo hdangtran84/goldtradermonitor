@@ -47,7 +47,7 @@ const FINANCE_FEEDS = new Set([
   'Polymarket', 'Markets'
 ]);
 const FINANCE_APIS = new Set([
-  'RSS2JSON', 'Finnhub', 'CoinGecko', 'Polymarket'
+  'RSS2JSON', 'Finnhub', 'CoinGecko', 'FRED', 'Polymarket'
 ]);
 
 import { t } from '../services/i18n';
