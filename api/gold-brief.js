@@ -40,6 +40,7 @@ export default async function handler(req) {
   if (!groqApiKey) {
     return new Response(JSON.stringify({ 
       error: 'GROQ_API_KEY not configured',
+      debug: `env keys: ${Object.keys(process.env).filter(k => k.includes('GROQ') || k.includes('API')).join(', ')}`,
       brief: null,
       timestamp: null,
     }), {
@@ -124,7 +125,8 @@ export default async function handler(req) {
       }
 
       return new Response(JSON.stringify({ 
-        error: 'Failed to generate brief',
+        error: `Groq API error: ${groqRes.status}`,
+        detail: errText.slice(0, 200),
         brief: null,
         timestamp: null,
       }), {
