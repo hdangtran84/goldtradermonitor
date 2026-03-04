@@ -42,6 +42,14 @@ const WORLD_APIS = new Set([
   'Cyber Threats API'
 ]);
 
+// Gold/Finance variant - only gold trading related services
+const FINANCE_FEEDS = new Set([
+  'Finance', 'Polymarket', 'Markets'
+]);
+const FINANCE_APIS = new Set([
+  'RSS2JSON', 'CoinGecko', 'Finnhub', 'FRED', 'Polymarket'
+]);
+
 import { t } from '../services/i18n';
 import { Panel } from './Panel';
 
@@ -59,8 +67,16 @@ export class StatusPanel extends Panel {
   }
 
   private init(): void {
-    this.allowedFeeds = SITE_VARIANT === 'tech' ? TECH_FEEDS : WORLD_FEEDS;
-    this.allowedApis = SITE_VARIANT === 'tech' ? TECH_APIS : WORLD_APIS;
+    if (SITE_VARIANT === 'tech') {
+      this.allowedFeeds = TECH_FEEDS;
+      this.allowedApis = TECH_APIS;
+    } else if (SITE_VARIANT === 'finance') {
+      this.allowedFeeds = FINANCE_FEEDS;
+      this.allowedApis = FINANCE_APIS;
+    } else {
+      this.allowedFeeds = WORLD_FEEDS;
+      this.allowedApis = WORLD_APIS;
+    }
 
     const panel = h('div', { className: 'status-panel hidden' },
       h('div', { className: 'status-panel-header' },
