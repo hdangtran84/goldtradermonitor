@@ -66,7 +66,21 @@ function wrapForGet(postHandler: (req: Request) => Promise<Response>): (req: Req
       body,
     });
 
-    return postHandler(fakePostRequest);
+    const response = await postHandler(fakePostRequest);
+    
+    // Add cache headers for successful GET responses to enable CDN caching
+    if (response.ok && !response.headers.has('Cache-Control')) {
+      const headers = new Headers(response.headers);
+      // 5 min CDN cache, 2 min client cache, serve stale while revalidating
+      headers.set('Cache-Control', 'public, max-age=120, s-maxage=300, stale-while-revalidate=120');
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
+    }
+    
+    return response;
   };
 }
 

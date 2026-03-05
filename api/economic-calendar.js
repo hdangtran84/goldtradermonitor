@@ -96,7 +96,7 @@ export default async function handler(req) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300, s-maxage=300', // Cache 5 min
+        'Cache-Control': 'public, max-age=600, s-maxage=1800, stale-while-revalidate=300', // 10 min client, 30 min CDN
         ...corsHeaders,
       },
     });
