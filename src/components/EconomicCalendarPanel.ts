@@ -131,68 +131,102 @@ export class EconomicCalendarPanel extends Panel {
     this.renderContent();
 
     try {
-      // Fetch from FXStreet calendar API with timeout
+      // Try Finnhub economic calendar (more reliable) then FXStreet as fallback
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
       
-      const response = await fetch('/api/forex-factory-calendar', { signal: controller.signal });
+      // Primary: Finnhub API (reliable for economic data)
+      let response = await fetch('/api/economic-calendar', { signal: controller.signal });
+      let data: Record<string, unknown> | unknown[] = {};
+      let useFinnhub = false;
+      
+      if (response.ok) {
+        data = await response.json();
+        // Check if response body contains an error (Finnhub returns 200 with error in body)
+        useFinnhub = !('error' in data) && (Array.isArray(data) || Array.isArray((data as Record<string, unknown>).events));
+      }
+      
+      // Fallback: FXStreet if Finnhub fails or returns error
+      if (!useFinnhub) {
+        console.warn('[EconomicCalendarPanel] Finnhub unavailable, using FXStreet...');
+        response = await fetch('/api/forex-factory-calendar', { signal: controller.signal });
+        if (response.ok) {
+          data = await response.json();
+        }
+      }
       clearTimeout(timeout);
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log('[EconomicCalendarPanel] API response:', data);
+      console.log('[EconomicCalendarPanel] API response:', useFinnhub ? 'Finnhub' : 'FXStreet', Array.isArray(data) ? data.length : (data as Record<string, unknown>).events);
       
       // Handle both response formats:
-      // - Vercel API: { events: [...] }
-      // - Direct FXStreet proxy: array of events
-      let rawEvents = Array.isArray(data) ? data : (data.events || []);
+      // - Finnhub API: { events: [...] } with time, event, estimate, actual, prev
+      // - FXStreet/Vercel API: { events: [...] } or array
+      const rawEvents = (Array.isArray(data) ? data : ((data as Record<string, unknown>).events || [])) as Array<{
+        id?: string;
+        eventId?: string;
+        name?: string;
+        event?: string;
+        dateUtc?: string;
+        time?: string;
+        countryCode?: string;
+        country?: string;
+        currencyCode?: string;
+        currency?: string;
+        volatility?: string;
+        impact?: 'high' | 'medium' | 'low' | number;
+        actual?: number | string | null;
+        estimate?: number | string | null;
+        consensus?: number | string | null;
+        previous?: number | string | null;
+        prev?: number | string | null;
+        forecast?: string;
+        unit?: string;
+        goldEffect?: { direction: string };
+      }>;
       
       // Check for API error response
-      if (data.error || data.fallback) {
-        console.warn('[EconomicCalendarPanel] FXStreet API error:', data.error);
+      if ('error' in data || 'fallback' in data) {
+        console.warn('[EconomicCalendarPanel] API error:', (data as Record<string, unknown>).error);
         this.events = this.getMockEvents();
       } else if (rawEvents.length === 0) {
-        console.warn('[EconomicCalendarPanel] FXStreet API returned no events, using mock data');
+        console.warn('[EconomicCalendarPanel] API returned no events, using mock data');
         this.events = this.getMockEvents();
       } else {
-        // Events already filtered by API (USD HIGH impact) - just transform to our format
+        // Events - transform to our format (handle both Finnhub and FXStreet formats)
         this.events = rawEvents
-          .map((e: {
-            id?: string;
-            eventId?: string;
-            name?: string;
-            dateUtc?: string;
-            time?: string;
-            countryCode?: string;
-            country?: string;
-            currencyCode?: string;
-            currency?: string;
-            volatility?: string;
-            impact?: 'high' | 'medium' | 'low';
-            actual?: number | string | null;
-            consensus?: number | string | null;
-            previous?: number | string | null;
-            forecast?: string;
-            unit?: string;
-            goldEffect?: { direction: string };
-          }) => ({
-            id: e.id || `fxs-${e.eventId}-${e.dateUtc || e.time}`,
-            name: e.name || 'Unknown Event',
-            time: new Date(e.dateUtc || e.time || Date.now()),
-            country: e.countryCode || e.country || 'US',
-            currency: e.currencyCode || e.currency || 'USD',
-            impact: this.mapVolatility(e.volatility) || e.impact || 'high',
-            actual: e.actual != null ? String(e.actual) + (e.unit || '') : undefined,
-            forecast: e.consensus != null ? String(e.consensus) + (e.unit || '') : e.forecast,
-            previous: e.previous != null ? String(e.previous) + (e.unit || '') : undefined,
-            goldEffect: e.goldEffect?.direction || this.getGoldEffect(e.name || ''),
-          }))
-          // Filter: only high-impact events in current week (Mon-Fri UTC)
+          .map((e) => {
+            // Map Finnhub impact (1-3) to our format
+            let impactLevel: 'high' | 'medium' | 'low' = 'low';
+            if (typeof e.impact === 'number') {
+              impactLevel = e.impact >= 3 ? 'high' : e.impact >= 2 ? 'medium' : 'low';
+            } else if (typeof e.impact === 'string') {
+              impactLevel = e.impact as 'high' | 'medium' | 'low';
+            } else if (e.volatility) {
+              impactLevel = this.mapVolatility(e.volatility);
+            }
+            
+            return {
+              id: e.id || `eco-${e.eventId || e.event}-${e.dateUtc || e.time}`,
+              name: e.name || e.event || 'Unknown Event',
+              time: new Date(e.dateUtc || e.time || Date.now()),
+              country: e.countryCode || e.country || 'US',
+              currency: e.currencyCode || e.currency || 'USD',
+              impact: impactLevel,
+              actual: e.actual != null ? String(e.actual) + (e.unit || '') : undefined,
+              forecast: e.estimate != null ? String(e.estimate) + (e.unit || '') : 
+                        e.consensus != null ? String(e.consensus) + (e.unit || '') : e.forecast,
+              previous: e.prev != null ? String(e.prev) + (e.unit || '') :
+                        e.previous != null ? String(e.previous) + (e.unit || '') : undefined,
+              goldEffect: e.goldEffect?.direction || this.getGoldEffect(e.name || e.event || ''),
+            };
+          })
+          // Filter: only USD high-impact events in current week (Mon-Fri UTC)
           .filter((e: EconomicEvent) => 
-            e.impact === 'high' && this.isInCurrentWeek(e.time)
+            e.currency === 'USD' && e.impact === 'high' && this.isInCurrentWeek(e.time)
           )
           // Sort by time (chronological)
           .sort((a: EconomicEvent, b: EconomicEvent) => {
@@ -207,7 +241,7 @@ export class EconomicCalendarPanel extends Panel {
         }
       }
     } catch (err) {
-      console.warn('[EconomicCalendarPanel] FXStreet fetch failed, using mock data:', err);
+      console.warn('[EconomicCalendarPanel] API fetch failed, using mock data:', err);
       this.events = this.getMockEvents();
     }
 
@@ -283,7 +317,8 @@ export class EconomicCalendarPanel extends Panel {
 
   private getMockEvents(): EconomicEvent[] {
     // Generate mock events for current week only (Mon-Fri UTC)
-    // These are positioned realistically within the current week
+    // These reflect typical high-impact USD events that occur each week
+    // Matches Investing.com calendar format - updated for accuracy
     
     const now = new Date();
     
@@ -296,14 +331,15 @@ export class EconomicCalendarPanel extends Panel {
       return d;
     };
     
-    // Define events that typically occur during any given week
-    // All times are in UTC (US Eastern releases at 8:30 AM ET = 13:30 UTC)
+    // Define typical high-impact USD events matching Investing.com calendar
+    // All times in UTC (US releases at 8:30 AM ET = 13:30 UTC, 10:00 AM ET = 15:00 UTC)
+    // Note: Use API data when available - this is fallback only
     const mockEvents: EconomicEvent[] = [
-      // Monday - ISM Manufacturing PMI (1st business day of month) at 15:00 UTC (10:00 ET)
+      // Monday - ISM Manufacturing PMI (first business day)
       {
-        id: 'ism-mfg',
-        name: 'ISM Manufacturing PMI',
-        time: atWeekdayUTC(0, 15, 0), // Monday 15:00 UTC
+        id: 'ism-manufacturing',
+        name: 'US ISM Manufacturing PMI',
+        time: atWeekdayUTC(0, 15, 0), // Monday 15:00 UTC (10:00 ET)
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -311,11 +347,11 @@ export class EconomicCalendarPanel extends Panel {
         previous: '50.9',
         goldEffect: 'Below 50 = contraction → Safe haven Gold bid',
       },
-      // Tuesday - JOLTS Job Openings at 15:00 UTC
+      // Tuesday - JOLTS Job Openings (labor market)
       {
         id: 'jolts',
-        name: 'JOLTS Job Openings',
-        time: atWeekdayUTC(1, 15, 0), // Tuesday 15:00 UTC
+        name: 'US JOLTS Job Openings',
+        time: atWeekdayUTC(1, 15, 0), // Tuesday 15:00 UTC (10:00 ET)
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -323,11 +359,11 @@ export class EconomicCalendarPanel extends Panel {
         previous: '7.74M',
         goldEffect: 'Weak job openings → Labor softening → Gold up',
       },
-      // Wednesday - ADP Nonfarm Employment at 13:15 UTC
+      // Wednesday - ADP Nonfarm Employment Change
       {
-        id: 'adp',
-        name: 'ADP Nonfarm Employment Change',
-        time: atWeekdayUTC(2, 13, 15), // Wednesday 13:15 UTC
+        id: 'adp-employment',
+        name: 'US ADP Nonfarm Employment Change',
+        time: atWeekdayUTC(2, 13, 15), // Wednesday 13:15 UTC (8:15 ET)
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -335,11 +371,11 @@ export class EconomicCalendarPanel extends Panel {
         previous: '183K',
         goldEffect: 'ADP preview for NFP → Weak = Gold supportive',
       },
-      // Wednesday - ISM Services PMI at 15:00 UTC
+      // Wednesday - ISM Services PMI
       {
-        id: 'ism-svc',
-        name: 'ISM Services PMI',
-        time: atWeekdayUTC(2, 15, 0), // Wednesday 15:00 UTC
+        id: 'ism-services',
+        name: 'US ISM Services PMI',
+        time: atWeekdayUTC(2, 15, 0), // Wednesday 15:00 UTC (10:00 ET)
         country: 'US',
         currency: 'USD',
         impact: 'high',
@@ -347,53 +383,53 @@ export class EconomicCalendarPanel extends Panel {
         previous: '52.8',
         goldEffect: 'Services sector health affects rate expectations',
       },
-      // Thursday - Initial Jobless Claims at 13:30 UTC
+      // Thursday - Initial Jobless Claims (weekly)
       {
         id: 'jobless',
-        name: 'Initial Jobless Claims',
-        time: atWeekdayUTC(3, 13, 30), // Thursday 13:30 UTC
+        name: 'US Initial Jobless Claims',
+        time: atWeekdayUTC(3, 13, 30), // Thursday 13:30 UTC (8:30 ET)
         country: 'US',
         currency: 'USD',
         impact: 'high',
-        forecast: '220K',
-        previous: '242K',
+        forecast: '216K',
+        previous: '213K',
         goldEffect: 'Higher claims → Weak labor → Gold supportive',
       },
-      // Friday - Nonfarm Payrolls at 13:30 UTC (1st Friday of month)
+      // Friday - NFP (first Friday of month) or other high-impact data
       {
-        id: 'nfp',
-        name: 'Nonfarm Payrolls',
-        time: atWeekdayUTC(4, 13, 30), // Friday 13:30 UTC
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        forecast: '185K',
-        previous: '143K',
-        goldEffect: 'Strong NFP → USD rally → Gold sell-off',
-      },
-      // Friday - Unemployment Rate at 13:30 UTC
-      {
-        id: 'unemp',
-        name: 'Unemployment Rate',
-        time: atWeekdayUTC(4, 13, 30), // Friday 13:30 UTC
-        country: 'US',
-        currency: 'USD',
-        impact: 'high',
-        forecast: '4.0%',
-        previous: '4.0%',
-        goldEffect: 'Rising unemployment → Fed dovish → Gold up',
-      },
-      // Friday - Average Hourly Earnings at 13:30 UTC
-      {
-        id: 'avg-earnings',
-        name: 'Average Hourly Earnings m/m',
-        time: atWeekdayUTC(4, 13, 30), // Friday 13:30 UTC
+        id: 'ppi-mom',
+        name: 'US PPI (MoM)',
+        time: atWeekdayUTC(4, 13, 30), // Friday 13:30 UTC (8:30 ET)
         country: 'US',
         currency: 'USD',
         impact: 'high',
         forecast: '0.3%',
-        previous: '0.5%',
-        goldEffect: 'Wage inflation → Fed tightening risk',
+        previous: '0.4%',
+        goldEffect: 'Producer Price Index signals future consumer inflation',
+      },
+      // Friday - Core PPI
+      {
+        id: 'core-ppi-mom',
+        name: 'US Core PPI (MoM)',
+        time: atWeekdayUTC(4, 13, 30), // Friday 13:30 UTC (8:30 ET)
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '0.2%',
+        previous: '0.3%',
+        goldEffect: 'Core PPI excludes food/energy volatility',
+      },
+      // Friday - Michigan Consumer Sentiment (preliminary)
+      {
+        id: 'michigan-sentiment',
+        name: 'US Michigan Consumer Sentiment',
+        time: atWeekdayUTC(4, 15, 0), // Friday 15:00 UTC (10:00 ET)
+        country: 'US',
+        currency: 'USD',
+        impact: 'high',
+        forecast: '64.0',
+        previous: '64.7',
+        goldEffect: 'Consumer confidence affects spending outlook',
       },
     ];
 

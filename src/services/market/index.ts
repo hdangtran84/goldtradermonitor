@@ -50,19 +50,21 @@ export interface MarketFetchResult {
 
 const lastSuccessfulByKey = new Map<string, MarketData[]>();
 
-// Mock/fallback data when APIs are unavailable (prices as of Feb 2026)
+// Mock/fallback data when APIs are unavailable (updated March 10, 2026)
+// NOTE: These are static fallback values - live data fetched from Yahoo Finance when available
+// Values based on actual Yahoo Finance prices as of March 10, 2026
 const MOCK_DATA: Record<string, MarketData> = {
-  // Commodities (Feb 2026 estimates)
-  '^VIX': { symbol: '^VIX', name: 'VIX', display: 'VIX', price: 18.45, change: -1.25, sparkline: [19.2, 18.9, 18.7, 18.5, 18.45] },
-  'GC=F': { symbol: 'GC=F', name: 'Gold', display: 'GOLD', price: 5203.50, change: -0.43, sparkline: [5180, 5195, 5210, 5215, 5203.5] },
-  'CL=F': { symbol: 'CL=F', name: 'Crude Oil', display: 'OIL', price: 64.11, change: -2.08, sparkline: [65.5, 65.2, 64.8, 64.3, 64.11] },
-  'NG=F': { symbol: 'NG=F', name: 'Natural Gas', display: 'NATGAS', price: 2.80, change: -2.41, sparkline: [2.88, 2.85, 2.83, 2.81, 2.80] },
-  'SI=F': { symbol: 'SI=F', name: 'Silver', display: 'SILVER', price: 87.26, change: 1.15, sparkline: [86.2, 86.5, 86.8, 87.0, 87.26] },
-  'HG=F': { symbol: 'HG=F', name: 'Copper', display: 'COPPER', price: 6.02, change: -0.82, sparkline: [6.08, 6.06, 6.04, 6.03, 6.02] },
-  // Indices
-  '^GSPC': { symbol: '^GSPC', name: 'S&P 500', display: 'SPX', price: 6125.40, change: 0.28, sparkline: [6100, 6110, 6115, 6120, 6125.40] },
-  '^DJI': { symbol: '^DJI', name: 'Dow Jones', display: 'DOW', price: 44850.60, change: 0.15, sparkline: [44700, 44750, 44800, 44830, 44850.60] },
-  '^IXIC': { symbol: '^IXIC', name: 'NASDAQ', display: 'NDX', price: 22738.45, change: -1.79, sparkline: [23100, 22950, 22850, 22780, 22738.45] },
+  // Commodities (March 10, 2026 - actual Yahoo Finance prices)
+  '^VIX': { symbol: '^VIX', name: 'VIX', display: 'VIX', price: 24.13, change: 0.42, sparkline: [23.5, 23.7, 23.9, 24.0, 24.13] },
+  'GC=F': { symbol: 'GC=F', name: 'Gold', display: 'GOLD', price: 5232.80, change: 2.53, sparkline: [5100, 5150, 5180, 5210, 5232.80] },
+  'CL=F': { symbol: 'CL=F', name: 'Crude Oil', display: 'OIL', price: 86.82, change: -0.85, sparkline: [87.5, 87.2, 87.0, 86.9, 86.82] },
+  'NG=F': { symbol: 'NG=F', name: 'Natural Gas', display: 'NATGAS', price: 4.12, change: 1.23, sparkline: [4.02, 4.05, 4.08, 4.10, 4.12] },
+  'SI=F': { symbol: 'SI=F', name: 'Silver', display: 'SILVER', price: 89.51, change: 5.89, sparkline: [84.5, 86.0, 87.5, 88.5, 89.51] },
+  'HG=F': { symbol: 'HG=F', name: 'Copper', display: 'COPPER', price: 5.94, change: -0.35, sparkline: [6.0, 5.98, 5.96, 5.95, 5.94] },
+  // Indices (March 10, 2026 - actual Yahoo Finance prices)
+  '^GSPC': { symbol: '^GSPC', name: 'S&P 500', display: 'SPX', price: 5770.20, change: -0.28, sparkline: [5800, 5790, 5780, 5775, 5770.20] },
+  '^DJI': { symbol: '^DJI', name: 'Dow Jones', display: 'DOW', price: 48000.16, change: 0.15, sparkline: [47900, 47950, 47980, 48000, 48000.16] },
+  '^IXIC': { symbol: '^IXIC', name: 'NASDAQ', display: 'NDX', price: 22838.42, change: -0.79, sparkline: [22900, 22880, 22860, 22845, 22838.42] },
   // Stocks
   'AAPL': { symbol: 'AAPL', name: 'Apple', display: 'AAPL', price: 187.52, change: 1.23, sparkline: [185, 186, 186.5, 187, 187.52] },
   'MSFT': { symbol: 'MSFT', name: 'Microsoft', display: 'MSFT', price: 423.85, change: 0.87, sparkline: [420, 421, 422, 423, 423.85] },

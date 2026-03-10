@@ -12,6 +12,25 @@ import { CHROME_UA, yahooGate } from '../../../_shared/constants';
 
 export const UPSTREAM_TIMEOUT_MS = 10_000;
 
+// Yahoo quote cache - holds successful responses to serve when rate-limited
+// TTL: 30 minutes - quotes stay fresh enough for display while avoiding stale mock data
+const YAHOO_CACHE_TTL_MS = 30 * 60 * 1000;
+const yahooCache = new Map<string, { data: { price: number; change: number; sparkline: number[] }; timestamp: number }>();
+
+function getCachedYahooQuote(symbol: string): { price: number; change: number; sparkline: number[] } | null {
+  const cached = yahooCache.get(symbol);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp > YAHOO_CACHE_TTL_MS) {
+    yahooCache.delete(symbol);
+    return null;
+  }
+  return cached.data;
+}
+
+function setCachedYahooQuote(symbol: string, data: { price: number; change: number; sparkline: number[] }): void {
+  yahooCache.set(symbol, { data, timestamp: Date.now() });
+}
+
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 export async function fetchYahooQuotesBatch(
@@ -125,33 +144,71 @@ export async function fetchFinnhubQuote(
 export async function fetchYahooQuote(
   symbol: string,
 ): Promise<{ price: number; change: number; sparkline: number[] } | null> {
-  try {
-    await yahooGate();
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
-    const resp = await fetch(url, {
-      headers: {
-        'User-Agent': CHROME_UA,
-      },
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
-    if (!resp.ok) return null;
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+  let wasRateLimited = false;
 
-    const data: YahooChartResponse = await resp.json();
-    const result = data.chart.result[0];
-    const meta = result?.meta;
-    if (!meta) return null;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      await yahooGate();
+      
+      // Add exponential backoff on retries
+      if (attempt > 0) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt), 5000);
+        console.log(`[Yahoo] Retry ${attempt + 1}/${maxRetries} for ${symbol}, waiting ${backoffMs}ms`);
+        await new Promise(r => setTimeout(r, backoffMs));
+      }
 
-    const price = meta.regularMarketPrice;
-    const prevClose = meta.chartPreviousClose || meta.previousClose || price;
-    const change = ((price - prevClose) / prevClose) * 100;
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
+      const resp = await fetch(url, {
+        headers: {
+          'User-Agent': CHROME_UA,
+        },
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+      });
 
-    const closes = result.indicators?.quote?.[0]?.close;
-    const sparkline = closes?.filter((v): v is number => v != null) || [];
+      // On rate limit, mark it and retry
+      if (resp.status === 429) {
+        console.warn(`[Yahoo] Rate limited (429) for ${symbol}, attempt ${attempt + 1}/${maxRetries}`);
+        wasRateLimited = true;
+        continue;
+      }
 
-    return { price, change, sparkline };
-  } catch {
-    return null;
+      if (!resp.ok) return getCachedYahooQuote(symbol); // Try cache on HTTP error
+
+      const data: YahooChartResponse = await resp.json();
+      const result = data.chart.result[0];
+      const meta = result?.meta;
+      if (!meta) return getCachedYahooQuote(symbol);
+
+      const price = meta.regularMarketPrice;
+      const prevClose = meta.chartPreviousClose || meta.previousClose || price;
+      const change = ((price - prevClose) / prevClose) * 100;
+
+      const closes = result.indicators?.quote?.[0]?.close;
+      const sparkline = closes?.filter((v): v is number => v != null) || [];
+
+      const quote = { price, change, sparkline };
+      
+      // Cache successful response for use during rate limits
+      setCachedYahooQuote(symbol, quote);
+      console.log('[Yahoo] Got quote for', symbol, ':', price);
+      return quote;
+    } catch (err) {
+      lastError = err as Error;
+      console.error('[Yahoo] Error fetching', symbol, ':', err);
+    }
   }
+
+  // All retries failed - return cached data if available (especially for rate limits)
+  const cached = getCachedYahooQuote(symbol);
+  if (cached) {
+    console.log(`[Yahoo] Using cached data for ${symbol} (rate limited: ${wasRateLimited})`);
+    return cached;
+  }
+
+  console.error('[Yahoo] All retries failed for', symbol, 'and no cache available');
+  return null;
 }
 
 // ========================================================================
