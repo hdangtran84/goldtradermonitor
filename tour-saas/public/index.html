@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trợ lý báo giá tour AI</title>
+<style>
+  :root { --brand:#0f766e; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f1f5f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  .wrap { max-width:760px; margin:0 auto; padding:28px 18px 60px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 20px; font-size:14px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; }
+  label { display:block; font-size:13px; font-weight:600; margin:14px 0 6px; }
+  textarea, input, select { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  textarea { min-height:90px; resize:vertical; }
+  .row { display:flex; gap:12px; }
+  .row > div { flex:1; }
+  button { margin-top:18px; background:var(--brand); color:#fff; border:0; border-radius:8px; padding:12px 18px; font-weight:700; font-size:15px; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:wait; }
+  .hint { font-size:12px; color:var(--muted); margin-top:6px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .chip { background:#e2e8f0; border:0; color:#334155; border-radius:999px; padding:6px 12px; font-size:13px; cursor:pointer; margin:0; }
+  .status { margin-top:16px; font-size:13px; }
+  .ok { color:#047857; } .err { color:#b91c1c; }
+  .result { margin-top:18px; }
+  .result iframe { width:100%; height:640px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+  .bar { display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+  a.btn { text-decoration:none; background:#fff; border:1px solid var(--brand); color:var(--brand); padding:8px 14px; border-radius:8px; font-weight:600; font-size:14px; }
+  .badge { font-size:11px; padding:2px 8px; border-radius:999px; }
+  .badge-ai { background:#ecfeff; color:#0e7490; } .badge-fb { background:#fef9c3; color:#854d0e; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Trợ lý báo giá &amp; lịch trình tour</h1>
+  <p class="lead">Nhập yêu cầu của khách bằng tiếng Việt → AI dựng lịch trình + chiết tính giá trên kho nhà cung cấp riêng → xuất proposal có brand.</p>
+
+  <div class="card">
+    <label>Yêu cầu của khách</label>
+    <textarea id="request" placeholder="VD: 2 người đi Đà Nẵng 4 ngày, thích biển và ăn hải sản, có đi Bà Nà và Hội An."></textarea>
+    <div class="chips" id="samples"></div>
+
+    <div class="row">
+      <div>
+        <label>Số khách</label>
+        <input id="pax" type="number" min="1" value="2" />
+      </div>
+      <div>
+        <label>Markup (%) — để trống dùng AI gợi ý</label>
+        <input id="markup" type="number" min="0" placeholder="vd: 18" />
+      </div>
+      <div>
+        <label>VAT (%)</label>
+        <input id="vat" type="number" min="0" value="10" />
+      </div>
+    </div>
+
+    <button id="go">Tạo báo giá</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="result" id="result" style="display:none">
+    <div class="bar">
+      <strong>Proposal</strong>
+      <span id="srcBadge"></span>
+      <a class="btn" id="openLink" target="_blank">Mở link đầy đủ ↗</a>
+      <span class="hint">Trong trang proposal nhấn Ctrl/Cmd+P để xuất PDF.</span>
+    </div>
+    <iframe id="frame"></iframe>
+  </div>
+</div>
+
+<script>
+const samples = [
+  "2 người đi Đà Nẵng 4 ngày, thích biển và ăn hải sản, có Bà Nà và Hội An.",
+  "Gia đình 4 người đi Phú Quốc 4 ngày 3 đêm nghỉ resort 5 sao, có tour 3 đảo.",
+  "2 vợ chồng đi Hạ Long 3 ngày, ngủ du thuyền 1 đêm, khởi hành từ Hà Nội.",
+  "Nhóm 6 người đi Tokyo 5 ngày, cần hỗ trợ visa, thăm núi Phú Sĩ."
+];
+const sc = document.getElementById('samples');
+samples.forEach(s => {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = s.length > 42 ? s.slice(0,42)+'…' : s;
+  b.onclick = () => { document.getElementById('request').value = s; };
+  sc.appendChild(b);
+});
+
+const $ = id => document.getElementById(id);
+fetch('/api/health').then(r=>r.json()).then(h=>{
+  $('status').innerHTML = h.aiEnabled
+    ? '<span class="ok">● AI đang BẬT</span>'
+    : '<span class="err">● AI đang TẮT — đang chạy chế độ fallback (đặt ANTHROPIC_API_KEY để bật chất lượng AI).</span>';
+});
+
+$('go').onclick = async () => {
+  const request = $('request').value.trim();
+  if (!request) { $('status').innerHTML = '<span class="err">Vui lòng nhập yêu cầu của khách.</span>'; return; }
+  const payload = {
+    request,
+    pax: Number($('pax').value) || 1,
+    markupPercent: $('markup').value === '' ? undefined : Number($('markup').value),
+    vatPercent: $('vat').value === '' ? undefined : Number($('vat').value),
+  };
+  $('go').disabled = true;
+  $('status').innerHTML = 'Đang dựng lịch trình &amp; chiết tính giá…';
+  try {
+    const r = await fetch('/api/quote', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Lỗi');
+    const p = data.proposal;
+    $('status').innerHTML = '<span class="ok">Xong! Giá/khách: '
+      + new Intl.NumberFormat('vi-VN').format(p.quote.pricePerPax) + ' ₫ · Lợi nhuận gộp '
+      + p.quote.marginPercent + '%</span>';
+    $('srcBadge').className = 'badge ' + (p.source === 'ai' ? 'badge-ai' : 'badge-fb');
+    $('srcBadge').textContent = p.source === 'ai' ? 'Tạo bằng AI' : 'Bản nháp (fallback)';
+    $('openLink').href = data.proposalUrl;
+    $('frame').src = data.proposalUrl;
+    $('result').style.display = 'block';
+  } catch (e) {
+    $('status').innerHTML = '<span class="err">' + e.message + '</span>';
+  } finally {
+    $('go').disabled = false;
+  }
+};
+</script>
+</body>
+</html>
