@@ -1,0 +1,230 @@
+{
+  "currency": "VND",
+  "note": "Kho giá nhà cung cấp ĐÃ ĐÀM PHÁN của agency. Giá net (chưa markup, chưa VAT). Đây là tài sản/moat của agency — AI chỉ được CHỌN dịch vụ từ đây, KHÔNG tự bịa giá.",
+  "services": [
+    {
+      "id": "DAD-FLIGHT-VJ",
+      "destination": "Đà Nẵng",
+      "category": "flight",
+      "name": "Vé máy bay khứ hồi SGN-DAD (Vietjet)",
+      "supplier": "Vietjet Air",
+      "unit": "per_person",
+      "netPrice": 1850000,
+      "note": "Giá net đoàn, đã gồm thuế phí cơ bản. Mùa cao điểm hè +25%."
+    },
+    {
+      "id": "DAD-HOTEL-4S",
+      "destination": "Đà Nẵng",
+      "category": "hotel",
+      "name": "Khách sạn 4* ven biển Mỹ Khê (phòng đôi, gồm ăn sáng)",
+      "supplier": "Risemount / đối tác",
+      "unit": "per_night_room",
+      "netPrice": 1100000,
+      "note": "Giá net/phòng/đêm. 2 khách/phòng."
+    },
+    {
+      "id": "DAD-CAR-16",
+      "destination": "Đà Nẵng",
+      "category": "transport",
+      "name": "Xe 16 chỗ đời mới (trọn gói/ngày, gồm tài + xăng)",
+      "supplier": "Nhà xe Tân Hoàng",
+      "unit": "per_unit",
+      "netPrice": 1800000,
+      "note": "Giá net/xe/ngày trong nội thành + Hội An."
+    },
+    {
+      "id": "DAD-GUIDE",
+      "destination": "Đà Nẵng",
+      "category": "guide",
+      "name": "Hướng dẫn viên tiếng Việt (trọn ngày)",
+      "supplier": "CTV HDV",
+      "unit": "per_unit",
+      "netPrice": 700000,
+      "note": "Giá net/HDV/ngày, chưa gồm tip."
+    },
+    {
+      "id": "DAD-BANA",
+      "destination": "Đà Nẵng",
+      "category": "activity",
+      "name": "Vé Bà Nà Hills + cáp treo + buffet trưa",
+      "supplier": "Sun World",
+      "unit": "per_person",
+      "netPrice": 850000,
+      "note": "Giá net/khách (giá đoàn)."
+    },
+    {
+      "id": "DAD-HOIAN-BOAT",
+      "destination": "Đà Nẵng",
+      "category": "activity",
+      "name": "Thuyền hoa đăng Hội An (đêm)",
+      "supplier": "HTX du lịch Hội An",
+      "unit": "per_person",
+      "netPrice": 120000,
+      "note": "Giá net/khách."
+    },
+    {
+      "id": "DAD-MEAL-SEAFOOD",
+      "destination": "Đà Nẵng",
+      "category": "meal",
+      "name": "Set hải sản nhà hàng (1 bữa)",
+      "supplier": "NH Bé Mặn",
+      "unit": "per_person",
+      "netPrice": 250000,
+      "note": "Giá net/khách/bữa."
+    },
+
+    {
+      "id": "HAN-HALONG-CRUISE",
+      "destination": "Hạ Long",
+      "category": "activity",
+      "name": "Du thuyền Hạ Long 5* ngủ đêm (full board)",
+      "supplier": "Paradise Cruise",
+      "unit": "per_person",
+      "netPrice": 2400000,
+      "note": "Giá net/khách/đêm, gồm ăn + hoạt động trên thuyền."
+    },
+    {
+      "id": "HAN-HOTEL-OLD",
+      "destination": "Hà Nội",
+      "category": "hotel",
+      "name": "Khách sạn 4* phố cổ Hà Nội (phòng đôi, gồm ăn sáng)",
+      "supplier": "Đối tác phố cổ",
+      "unit": "per_night_room",
+      "netPrice": 950000,
+      "note": "Giá net/phòng/đêm."
+    },
+    {
+      "id": "HAN-CAR-7",
+      "destination": "Hà Nội",
+      "category": "transport",
+      "name": "Xe 7 chỗ đưa đón Hà Nội - Hạ Long khứ hồi",
+      "supplier": "Nhà xe đối tác",
+      "unit": "per_unit",
+      "netPrice": 2600000,
+      "note": "Giá net/xe/chuyến (tối đa 4 khách)."
+    },
+    {
+      "id": "HAN-CITY-TOUR",
+      "destination": "Hà Nội",
+      "category": "activity",
+      "name": "City tour Hà Nội (Văn Miếu, Hỏa Lò, vé vào cửa)",
+      "supplier": "Tự điều hành",
+      "unit": "per_person",
+      "netPrice": 300000,
+      "note": "Giá net/khách gồm vé tham quan."
+    },
+
+    {
+      "id": "PQC-FLIGHT",
+      "destination": "Phú Quốc",
+      "category": "flight",
+      "name": "Vé khứ hồi SGN-PQC (Vietnam Airlines)",
+      "supplier": "Vietnam Airlines",
+      "unit": "per_person",
+      "netPrice": 2200000,
+      "note": "Giá net đoàn."
+    },
+    {
+      "id": "PQC-HOTEL-5S",
+      "destination": "Phú Quốc",
+      "category": "hotel",
+      "name": "Resort 5* Bãi Trường (phòng đôi, gồm ăn sáng)",
+      "supplier": "Đối tác resort",
+      "unit": "per_night_room",
+      "netPrice": 1900000,
+      "note": "Giá net/phòng/đêm."
+    },
+    {
+      "id": "PQC-CABLE",
+      "destination": "Phú Quốc",
+      "category": "activity",
+      "name": "Vé Hòn Thơm + cáp treo vượt biển",
+      "supplier": "Sun World",
+      "unit": "per_person",
+      "netPrice": 600000,
+      "note": "Giá net/khách."
+    },
+    {
+      "id": "PQC-CANO",
+      "destination": "Phú Quốc",
+      "category": "activity",
+      "name": "Tour 3 đảo ca nô + lặn ngắm san hô (gồm ăn trưa)",
+      "supplier": "HTX ca nô",
+      "unit": "per_person",
+      "netPrice": 550000,
+      "note": "Giá net/khách."
+    },
+
+    {
+      "id": "TYO-FLIGHT",
+      "destination": "Tokyo",
+      "category": "flight",
+      "name": "Vé khứ hồi SGN-NRT (Vietnam Airlines)",
+      "supplier": "Vietnam Airlines",
+      "unit": "per_person",
+      "netPrice": 9800000,
+      "note": "Giá net đoàn, chưa gồm phụ thu nhiên liệu mùa cao điểm."
+    },
+    {
+      "id": "TYO-HOTEL-3S",
+      "destination": "Tokyo",
+      "category": "hotel",
+      "name": "Khách sạn 3* Shinjuku (phòng đôi)",
+      "supplier": "Đối tác land Nhật",
+      "unit": "per_night_room",
+      "netPrice": 2300000,
+      "note": "Giá net/phòng/đêm, quy đổi từ JPY."
+    },
+    {
+      "id": "TYO-LANDTOUR",
+      "destination": "Tokyo",
+      "category": "activity",
+      "name": "Land tour Tokyo - Phú Sĩ trọn gói/ngày (xe + HDV + vé)",
+      "supplier": "DMC Nhật Bản",
+      "unit": "per_person",
+      "netPrice": 1600000,
+      "note": "Giá net/khách/ngày."
+    },
+    {
+      "id": "TYO-VISA",
+      "destination": "Tokyo",
+      "category": "visa",
+      "name": "Visa Nhật Bản (phí dịch vụ + lãnh sự)",
+      "supplier": "Đối tác visa",
+      "unit": "per_person",
+      "netPrice": 1200000,
+      "note": "Giá net/khách."
+    },
+
+    {
+      "id": "BKK-FLIGHT",
+      "destination": "Bangkok",
+      "category": "flight",
+      "name": "Vé khứ hồi SGN-BKK (Vietjet)",
+      "supplier": "Vietjet Air",
+      "unit": "per_person",
+      "netPrice": 2600000,
+      "note": "Giá net đoàn."
+    },
+    {
+      "id": "BKK-HOTEL-4S",
+      "destination": "Bangkok",
+      "category": "hotel",
+      "name": "Khách sạn 4* Sukhumvit (phòng đôi, gồm ăn sáng)",
+      "supplier": "Đối tác land Thái",
+      "unit": "per_night_room",
+      "netPrice": 900000,
+      "note": "Giá net/phòng/đêm."
+    },
+    {
+      "id": "BKK-LANDTOUR",
+      "destination": "Bangkok",
+      "category": "activity",
+      "name": "Land tour Bangkok - Pattaya trọn gói/ngày",
+      "supplier": "DMC Thái Lan",
+      "unit": "per_person",
+      "netPrice": 700000,
+      "note": "Giá net/khách/ngày, gồm xe + HDV + vé."
+    }
+  ]
+}
